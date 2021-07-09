@@ -1,0 +1,32 @@
+{
+  "name": "netgame",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "re:build": "bsb -make-world -clean-world",
+    "re:watch": "bsb -make-world -clean-world -w -verbose",
+    "expose": "ssh -R 80:localhost:8443 localhost.run",
+    "ci:dev": "node-dev src/check-in/CheckInServer.bs.js",
+    "ci:prod": "pm2 src/check-in/CheckInServer.bs.js",
+    "prettify": "swc src -d out -w",
+    "run": "node-dev src/main.bs.js --notify=false",
+    "commit": "git add . && git commit -m \"$(curl -s http://whatthecommit.com/index.txt)\" && git push",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thanglongnamnay/netgame.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/thanglongnamnay/netgame/issues"
+  },
+  "homepage": "https://github.com/thanglongnamnay/netgame#readme",
+  "dependencies": {
+    "reason-nodejs": "*",
+    "rescript": "^9.1.4"
+  }
+}
