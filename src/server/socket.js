@@ -8,11 +8,7 @@ const { ServerSendT } = require("../flat-models/server-send");
 const ServerRoom = require("../common/ServerRoom.bs");
 const converter = require("../converter");
 const server = dgram.createSocket('udp4');
-/**
- * 
- * @param {*} rinfo 
- * @param {ServerSendT} sendObj 
- */
+const PLAYER_COUNT = 4;
 const send = function (rinfo, sendObj) {
     // fbb.clear();
     const fbb = new flatbuffers.Builder(1);
@@ -23,7 +19,7 @@ server.on('error', function (err) {
     console.log("server error:\n" + err.stack);
     server.close();
 });
-let t = ServerRoom.nope(2);
+let t = ServerRoom.nope(PLAYER_COUNT);
 const rinfoMap = [];
 setInterval(function update() {
     try {
@@ -60,4 +56,3 @@ server.on('listening', function () {
     console.log("server listening " + address.address + ":" + address.port);
 });
 server.bind(41234);
-//# sourceMappingURL=socket.js.map

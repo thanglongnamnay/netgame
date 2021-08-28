@@ -4,7 +4,6 @@ const socket = require("./socket");
 const ClientData = require("../common/ClientData.bs");
 const { ClientSendT } = require("../flat-models/client-send");
 const converter = require("../converter");
-const { createClassifier } = require("typescript");
 
 const colors = ['white', 'green', 'blue', 'cyan'];
 const stringify = v => JSON.stringify(v, null, 2);
@@ -18,14 +17,18 @@ const draw = (playerIndex, payload, ctx) => {
 }
 const client = (myIndex, playerCount, canvas) => {
     const log = console.log.bind(console, "client", myIndex);
+    // const log = () => { };
     canvas.style.backgroundColor = colors[3 - myIndex];
     let curTouch = 0;
     let curPos = { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
     canvas.onmouseout = e => {
         curTouch = 0;
     }
+    canvas.onmouseup = e => {
+        curTouch = 0;
+    }
     canvas.onmousemove = e => {
+        const rect = canvas.getBoundingClientRect();
         curTouch = e.buttons | 1;
         curPos = {
             x: e.clientX - rect.left,
@@ -97,7 +100,11 @@ window.addEventListener('DOMContentLoaded', function () {
         const type = _a[_i];
         replaceText(type + "-version", process.versions[type]);
     }
-    const canvas = ['canvas0', 'canvas1'].map(c => document.getElementById(c));
-    client(0, 2, canvas[0]);
-    client(1, 2, canvas[1]);
+    const canvasList = Array(4).fill(0).map(() => document.createElement('canvas'));
+    canvasList.forEach(canvas => {
+        canvas.width = 400;
+        canvas.height = 300;
+        document.body.appendChild(canvas);
+    });
+    canvasList.forEach((canvas, i) => client(i, 4, canvas));
 });
