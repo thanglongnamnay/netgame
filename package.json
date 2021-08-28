@@ -2,17 +2,20 @@
   "name": "netgame",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/client/main.js",
   "scripts": {
     "re:build": "bsb -make-world -clean-world",
     "re:watch": "bsb -make-world -clean-world -w -verbose",
+    "ts:watch": "tsc",
     "expose": "ssh -R 80:localhost:8443 localhost.run",
     "ci:dev": "node-dev src/check-in/CheckInServer.bs.js",
     "ci:prod": "pm2 src/check-in/CheckInServer.bs.js",
+    "el:start": "electron .",
+    "el:server": "node-dev src/server/socket --notify=false",
     "prettify": "swc src -d out -w",
     "run": "node-dev src/main.bs.js --notify=false",
     "commit": "git add . && git commit -m \"$(curl -s http://whatthecommit.com/index.txt)\" && git push",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node src/common/TestAll.bs.js"
   },
   "repository": {
     "type": "git",
@@ -26,7 +29,17 @@
   },
   "homepage": "https://github.com/thanglongnamnay/netgame#readme",
   "dependencies": {
+    "flatbuffers": "^2.0.3",
     "reason-nodejs": "*",
-    "rescript": "^9.1.4"
+    "rescript": "^9.1.4",
+    "typescript": "^4.3.5"
+  },
+  "devDependencies": {
+    "@babel/code-frame": "^7.14.5",
+    "@types/node": "^16.7.1",
+    "electron": "^13.2.1",
+    "electron-reloader": "^1.2.1",
+    "node-dev": "^7.0.0",
+    "ts-node-dev": "^1.1.8"
   }
 }

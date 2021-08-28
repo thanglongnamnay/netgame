@@ -1,0 +1,2 @@
+TouchTest.test()
+FramesTest.test()
