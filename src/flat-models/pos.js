@@ -12,18 +12,18 @@ var Pos = (function () {
         return this;
     };
     Pos.prototype.x = function () {
-        return this.bb.readInt16(this.bb_pos);
+        return this.bb.readFloat32(this.bb_pos);
     };
     Pos.prototype.y = function () {
-        return this.bb.readInt16(this.bb_pos + 2);
+        return this.bb.readFloat32(this.bb_pos + 4);
     };
     Pos.sizeOf = function () {
-        return 4;
+        return 8;
     };
     Pos.createPos = function (builder, x, y) {
-        builder.prep(2, 4);
-        builder.writeInt16(y);
-        builder.writeInt16(x);
+        builder.prep(4, 8);
+        builder.writeFloat32(y);
+        builder.writeFloat32(x);
         return builder.offset();
     };
     Pos.prototype.unpack = function () {
@@ -38,8 +38,8 @@ var Pos = (function () {
 exports.Pos = Pos;
 var PosT = (function () {
     function PosT(x, y) {
-        if (x === void 0) { x = 0; }
-        if (y === void 0) { y = 0; }
+        if (x === void 0) { x = 0.0; }
+        if (y === void 0) { y = 0.0; }
         this.x = x;
         this.y = y;
     }

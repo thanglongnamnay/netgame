@@ -12,7 +12,6 @@ var create = function (cb) {
     });
     client.on('message', function (msg, rinfo) {
         var receiveObj = server_send_1.ServerSend.getRootAsServerSend(new flatbuffers.ByteBuffer(msg)).unpack();
-        console.log("client got from " + rinfo.address + ":" + rinfo.port, JSON.stringify(receiveObj));
         cb(receiveObj);
     });
     client.connect(41234);

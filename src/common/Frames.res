@@ -35,3 +35,17 @@ let step = (t, action) =>
       payloads: t.payloads->ImmuArray.tail,
     }
   }
+
+let serialize = t => Rebuffers.Schema([
+  Int(t.end),
+  Array(Rebuffers.toList(ImmuArray.toArray(t.payloads), Payload.serialize)),
+])
+let deserialize = (schema: Rebuffers.schema): t => {
+  switch schema {
+  | Schema([Int(end), payloads]) => {
+      end: end,
+      payloads: payloads->Rebuffers.deserialize(List(Payload.deserialize))->ImmuArray.make,
+    }
+  | _ => raise(Not_found)
+  }
+}

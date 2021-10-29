@@ -30,7 +30,7 @@ end():number {
 
 payloads(index: number, obj?:Payload):Payload|null {
   const offset = this.bb!.__offset(this.bb_pos, 6);
-  return offset ? (obj || new Payload()).__init(this.bb!.__vector(this.bb_pos + offset) + index * 6, this.bb!) : null;
+  return offset ? (obj || new Payload()).__init(this.bb!.__indirect(this.bb!.__vector(this.bb_pos + offset) + index * 4), this.bb!) : null;
 }
 
 payloadsLength():number {
@@ -50,8 +50,16 @@ static addPayloads(builder:flatbuffers.Builder, payloadsOffset:flatbuffers.Offse
   builder.addFieldOffset(1, payloadsOffset, 0);
 }
 
+static createPayloadsVector(builder:flatbuffers.Builder, data:flatbuffers.Offset[]):flatbuffers.Offset {
+  builder.startVector(4, data.length, 4);
+  for (let i = data.length - 1; i >= 0; i--) {
+    builder.addOffset(data[i]!);
+  }
+  return builder.endVector();
+}
+
 static startPayloadsVector(builder:flatbuffers.Builder, numElems:number) {
-  builder.startVector(6, numElems, 2);
+  builder.startVector(4, numElems, 4);
 }
 
 static endFrames(builder:flatbuffers.Builder):flatbuffers.Offset {
@@ -88,7 +96,7 @@ constructor(
 
 
 pack(builder:flatbuffers.Builder): flatbuffers.Offset {
-  const payloads = builder.createStructOffsetList(this.payloads, Frames.startPayloadsVector);
+  const payloads = Frames.createPayloadsVector(builder, builder.createObjectOffsetList(this.payloads));
 
   return Frames.createFrames(builder,
     this.end,

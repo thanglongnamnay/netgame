@@ -13,7 +13,7 @@ const create = (cb: (receiveObj: ServerSendT) => void) => {
   client.on('message', (msg, rinfo) => {
     const receiveObj = ServerSend.getRootAsServerSend(new flatbuffers.ByteBuffer(msg)).unpack();
 
-    console.log(`client got from ${rinfo.address}:${rinfo.port}`, JSON.stringify(receiveObj));
+    // console.log(`client got from ${rinfo.address}:${rinfo.port}`, JSON.stringify(receiveObj));
     cb(receiveObj);
   });
 

@@ -14,21 +14,21 @@ __init(i:number, bb:flatbuffers.ByteBuffer):Pos {
 }
 
 x():number {
-  return this.bb!.readInt16(this.bb_pos);
+  return this.bb!.readFloat32(this.bb_pos);
 }
 
 y():number {
-  return this.bb!.readInt16(this.bb_pos + 2);
+  return this.bb!.readFloat32(this.bb_pos + 4);
 }
 
 static sizeOf():number {
-  return 4;
+  return 8;
 }
 
 static createPos(builder:flatbuffers.Builder, x: number, y: number):flatbuffers.Offset {
-  builder.prep(2, 4);
-  builder.writeInt16(y);
-  builder.writeInt16(x);
+  builder.prep(4, 8);
+  builder.writeFloat32(y);
+  builder.writeFloat32(x);
   return builder.offset();
 }
 
@@ -49,8 +49,8 @@ unpackTo(_o: PosT): void {
 
 export class PosT {
 constructor(
-  public x: number = 0,
-  public y: number = 0
+  public x: number = 0.0,
+  public y: number = 0.0
 ){}
 
 

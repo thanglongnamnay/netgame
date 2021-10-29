@@ -26,7 +26,7 @@ var Frames = (function () {
     };
     Frames.prototype.payloads = function (index, obj) {
         var offset = this.bb.__offset(this.bb_pos, 6);
-        return offset ? (obj || new payload_1.Payload()).__init(this.bb.__vector(this.bb_pos + offset) + index * 6, this.bb) : null;
+        return offset ? (obj || new payload_1.Payload()).__init(this.bb.__indirect(this.bb.__vector(this.bb_pos + offset) + index * 4), this.bb) : null;
     };
     Frames.prototype.payloadsLength = function () {
         var offset = this.bb.__offset(this.bb_pos, 6);
@@ -41,8 +41,15 @@ var Frames = (function () {
     Frames.addPayloads = function (builder, payloadsOffset) {
         builder.addFieldOffset(1, payloadsOffset, 0);
     };
+    Frames.createPayloadsVector = function (builder, data) {
+        builder.startVector(4, data.length, 4);
+        for (var i = data.length - 1; i >= 0; i--) {
+            builder.addOffset(data[i]);
+        }
+        return builder.endVector();
+    };
     Frames.startPayloadsVector = function (builder, numElems) {
-        builder.startVector(6, numElems, 2);
+        builder.startVector(4, numElems, 4);
     };
     Frames.endFrames = function (builder) {
         var offset = builder.endObject();
@@ -72,7 +79,7 @@ var FramesT = (function () {
         this.payloads = payloads;
     }
     FramesT.prototype.pack = function (builder) {
-        var payloads = builder.createStructOffsetList(this.payloads, Frames.startPayloadsVector);
+        var payloads = Frames.createPayloadsVector(builder, builder.createObjectOffsetList(this.payloads));
         return Frames.createFrames(builder, this.end, payloads);
     };
     return FramesT;

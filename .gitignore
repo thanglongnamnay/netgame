@@ -289,3 +289,4 @@ type/config.d.ts
 **/~$localize.xlsx
 .bsb.lock
 .clinic
+*.map

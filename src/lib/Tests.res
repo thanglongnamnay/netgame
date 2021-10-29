@@ -4,7 +4,10 @@
 @scope("Error") @val external captureStackTrace: {..} => unit = "captureStackTrace"
 @module("@babel/code-frame") @val
 external codeFrameColumns: (string, {..}, {..}) => string = "codeFrameColumns"
-@module("fs") @val external readFileSync: (string, {..}) => string = "readFileSync"
+@module external glob: string => Js.Promise.t<array<string>> = "fast-glob"
+type fs = {readFile: (string, {..}) => Js.Promise.t<string>}
+@module("fs")
+external fs: fs => Js.Promise.t<string> = "promise"
 @module("path") @val external join: (string, string) => string = "join"
 
 let dirname = switch %external(__dirname) {
@@ -40,15 +43,18 @@ let cleanUpStackTrace = stack => {
 let run = (loc, left, comparator, right) => {
   let ((file, line, _, _), content) = loc
   if !comparator(left, right) {
-    let fileContent = readFileSync(join(dirname, file), {"encoding": "utf-8"})
-    let left = Js.Json.stringifyAny(left)
-    let right = Js.Json.stringifyAny(right)
-    let codeFrame = codeFrameColumns(
-      fileContent,
-      {"start": {"line": line}},
-      {"highlightCode": true},
-    )
-    let errorMessage = j`
+    glob(j`src/**/${file}.res`)
+    ->Promise2.map(Belt.Array.getExn(_, 0))
+    ->Promise2.flatMap(readFile(_, {"encoding": "utf-8"}))
+    ->Promise2.map(fileContent => {
+      let left = Js.Json.stringifyAny(left)
+      let right = Js.Json.stringifyAny(right)
+      let codeFrame = codeFrameColumns(
+        fileContent,
+        {"start": {"line": line}},
+        {"highlightCode": true},
+      )
+      let errorMessage = j`
   \u001b[31mTest Failure!
   \u001b[36m$file\u001b[0m:\u001b[2m$line
 
@@ -57,11 +63,13 @@ $codeFrame
   \u001b[39mActual: \u001b[31m$left
   \u001b[39mExpected: \u001b[31m$right\u001b[0m
 `
-    Js.log(errorMessage)
-    // API: https://nodejs.org/api/errors.html#errors_error_capturestacktrace_targetobject_constructoropt
-    let obj = Js.Obj.empty()
-    captureStackTrace(obj)
-    Js.log(obj["stack"]->cleanUpStackTrace)
+      Js.log(errorMessage)
+      // API: https://nodejs.org/api/errors.html#errors_error_capturestacktrace_targetobject_constructoropt
+      let obj = Js.Obj.empty()
+      captureStackTrace(obj)
+      Js.log(obj["stack"]->cleanUpStackTrace)
+    })
+    ->ignore
   } else {
     Js.log2(j`\u001b[36mPassed:`, j`\u001b[39m$content`)
   }

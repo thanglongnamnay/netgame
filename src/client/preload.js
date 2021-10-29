@@ -1,16 +1,17 @@
 "use strict";
-const Touch = require("../common/Touch.bs");
 const socket = require("./socket");
 const ClientData = require("../common/ClientData.bs");
 const { ClientSendT } = require("../flat-models/client-send");
+const Game = require("../game/index");
 const converter = require("../converter");
 
+const PLAYER_COUNT = 2;
 const colors = ['white', 'green', 'blue', 'cyan'];
 const stringify = v => JSON.stringify(v, null, 2);
 const draw = (playerIndex, payload, ctx) => {
-    if (Touch.isMouseUp(payload.touch)) return;
+    if (!(payload.touches | 1)) return;
     ctx.beginPath();
-    const pos = Touch.getPos(payload.touch);
+    const pos = payload.touchPos;
     ctx.arc(pos.x, pos.y, 20, 0, Math.PI * 2);
     ctx.fillStyle = colors[playerIndex];
     ctx.fill();
@@ -19,6 +20,7 @@ const client = (myIndex, playerCount, canvas) => {
     const log = console.log.bind(console, "client", myIndex);
     // const log = () => { };
     canvas.style.backgroundColor = colors[3 - myIndex];
+
     let curTouch = 0;
     let curPos = { x: 0, y: 0 };
     canvas.onmouseout = e => {
@@ -29,13 +31,47 @@ const client = (myIndex, playerCount, canvas) => {
     }
     canvas.onmousemove = e => {
         const rect = canvas.getBoundingClientRect();
-        curTouch = e.buttons | 1;
+        curTouch = e.buttons;
         curPos = {
             x: e.clientX - rect.left,
             y: e.clientY - rect.top,
         };
     }
-    const ctx = canvas.getContext('2d');
+    let currentKeys = new Set();
+    const toKeyCode = e => {
+        switch (e.code) {
+            case "KeyS":
+            case "ArrowDown":
+                return 's'.charCodeAt(0);
+            case "KeyW":
+            case "ArrowUp":
+                return 'w'.charCodeAt(0);
+            case "KeyA":
+            case "ArrowLeft":
+                return 'a'.charCodeAt(0);
+            case "KeyD":
+            case "ArrowRight":
+                return 'd'.charCodeAt(0);
+        }
+    }
+    window.addEventListener('keydown', function (evt) {
+        console.log("onkeydown", evt.code);
+        currentKeys.add(toKeyCode(evt));
+    });
+    window.addEventListener('keyup', e => {
+        console.log("onkeyup", e.code);
+        currentKeys.delete(toKeyCode(e));
+    });
+    const getCurrentInput = () => {
+        const keys = Array.from(currentKeys.values());
+        return {
+            touches: curTouch,
+            touchPos: curPos,
+            keys,
+        }
+    }
+
+    const gameLoop = Game.make(playerCount, canvas);
     let t = ClientData.nope(myIndex, playerCount);
     const client = socket.create((receiveObj) => {
         const receiveData = {
@@ -47,13 +83,12 @@ const client = (myIndex, playerCount, canvas) => {
     });
     const step = () => {
         log("update or fuckyou", stringify(t), curPos);
-        t = ClientData.step(t, ClientData.addFrame({
-            touch: curTouch === Touch.up ? Touch.up : Touch.down(curPos)
-        }));
+        t = ClientData.step(t, ClientData.addFrame(getCurrentInput()));
         try {
             const payloads = ClientData.getFirstFrames(t);
             log("payloads Draw", payloads);
-            payloads.forEach((payload, index) => draw(index, payload, ctx));
+            gameLoop(dt, payloads);
+            // payloads.forEach((payload, index) => draw(index, payload, ctx));
             t = ClientData.step(t, ClientData.consume);
         } catch (e) {
             log(stringify(e), "but it's ok");
@@ -72,9 +107,9 @@ const client = (myIndex, playerCount, canvas) => {
         } catch (e) {
             log(stringify(e), 'its ok');
         }
-    }, 1000 / 10);
+    }, 1000 / 1);
 
-    const dt = 1000 / 30;
+    const dt = 1000 / 3;
     let accumulateTime = 0;
     let time = 0;
     requestAnimationFrame(function update(now) {
@@ -100,11 +135,11 @@ window.addEventListener('DOMContentLoaded', function () {
         const type = _a[_i];
         replaceText(type + "-version", process.versions[type]);
     }
-    const canvasList = Array(4).fill(0).map(() => document.createElement('canvas'));
+    const canvasList = Array(PLAYER_COUNT).fill(0).map(() => document.createElement('canvas'));
     canvasList.forEach(canvas => {
         canvas.width = 400;
         canvas.height = 300;
         document.body.appendChild(canvas);
     });
-    canvasList.forEach((canvas, i) => client(i, 4, canvas));
+    canvasList.forEach((canvas, i) => client(i, PLAYER_COUNT, canvas));
 });

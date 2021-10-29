@@ -1,14 +1,11 @@
 struct Pos {
-  x: short = 0;
-  y: short = 0;
+  x: float = 0;
+  y: float = 0;
 }
-enum Touch:byte {
-  Up = 0,
-  Down = 1,
-}
-struct Payload {
-  touch: Touch;
-  pos: Pos;
+table Payload {
+  keys: [byte];
+  touches: byte = 0;
+  touchPos: Pos;
 }
 table Frames {
   end: int;

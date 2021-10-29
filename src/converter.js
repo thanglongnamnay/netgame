@@ -1,14 +1,20 @@
-const fTouch = require('./flat-models/touch');
-const rTouch = require('./common/Touch.bs');
+const fPos = require('./flat-models/pos');
 const fPayload = require('./flat-models/payload');
 const rPayload = require('./common/Payload.bs');
 const fFrames = require('./flat-models/frames');
 const rFrames = require('./common/Frames.bs');
 
-const payload = t => new fPayload.PayloadT(rTouch.isMouseDown(t.touch), rTouch.getPos(t.touch) || { x: 0, y: 0 })
-const rpayload = payload => ({
-  touch: payload.touch ? rTouch.down(payload.pos) : rTouch.up,
-});
+const pos = t => new fPos.PosT(
+  t.x,
+  t.y,
+);
+
+const payload = t => new fPayload.PayloadT(
+  t.keys,
+  t.touches,
+  pos(t.touchPos),
+);
+const rpayload = payload => payload;
 
 const frames = t => new fFrames.FramesT(t.end, t.payloads.map(payload));
 const rframes = frames => ({

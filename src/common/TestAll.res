@@ -1,2 +1,0 @@
-TouchTest.test()
-FramesTest.test()
