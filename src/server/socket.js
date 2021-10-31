@@ -29,7 +29,7 @@ server.on('message', function (msg, rinfo) {
     // console.log("msg from", rinfo, msg.readInt32LE(0));
     rooms.filter(r => r.id === msg.readInt32LE(0)).forEach(room => room.onMessage(msg.slice(4), rinfo));
 });
-server.bind(41234);
+server.bind(8081);
 const nextId = (() => {
     let id = 0;
     return () => ++id;

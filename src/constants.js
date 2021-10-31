@@ -1,2 +1,2 @@
 exports.makeRoom = 1;
-exports.host = 'http://tlnn.ddns.net';
+exports.host = 'tlnn.ddns.net';

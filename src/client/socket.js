@@ -16,7 +16,7 @@ var create = function (cb) {
         var receiveObj = server_send_1.ServerSend.getRootAsServerSend(new flatbuffers.ByteBuffer(msg)).unpack();
         cb(receiveObj);
     });
-    client.connect(41234, constants.host);
+    client.connect(8081, constants.host);
     return client;
 };
 exports.create = create;

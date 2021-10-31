@@ -291,7 +291,7 @@ window.addEventListener('DOMContentLoaded', () => {
     return response.json(); // parses JSON response into native JavaScript objects
   }
   document.getElementById('find-match').onclick = async (e) => {
-    postData(`${constants.host}:8080/find-match`, {
+    postData(`http://${constants.host}:8080/find-match`, {
       name: document.getElementById('name').value,
     }).then(info => {
       console.log("fetched", info);

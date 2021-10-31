@@ -20,7 +20,7 @@ const create = (cb: (receiveObj: ServerSendT) => void) => {
     cb(receiveObj);
   });
 
-  client.connect(41234, constants.host);
+  client.connect(8081, constants.host);
   return client;
 }
 const fbb = new flatbuffers.Builder(1);
