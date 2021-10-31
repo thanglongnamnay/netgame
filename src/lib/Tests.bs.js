@@ -2,10 +2,10 @@
 'use strict';
 
 var Fs = require("fs");
-var Curry = require("rescript/lib/js/curry.js");
-var Caml_obj = require("rescript/lib/js/caml_obj.js");
+var Curry = require("@rescript/std/lib/js/curry.js");
+var Caml_obj = require("@rescript/std/lib/js/caml_obj.js");
 var FastGlob = require("fast-glob");
-var Belt_Array = require("rescript/lib/js/belt_Array.js");
+var Belt_Array = require("@rescript/std/lib/js/belt_Array.js");
 var Promise2$Netgame = require("./Promise2.bs.js");
 var CodeFrame = require("@babel/code-frame");
 

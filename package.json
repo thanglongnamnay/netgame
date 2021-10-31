@@ -30,6 +30,7 @@
   },
   "homepage": "https://github.com/thanglongnamnay/netgame#readme",
   "dependencies": {
+    "@rescript/std": "^9.1.3",
     "express": "^4.17.1",
     "fast-glob": "^3.2.7",
     "flatbuffers": "^2.0.3",

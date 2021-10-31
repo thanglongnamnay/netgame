@@ -22,5 +22,6 @@
     "reason-nodejs"
   ],
   "ppx-flags": [],
+  "external-stdlib": "@rescript/std",
   "refmt": 3
 }
