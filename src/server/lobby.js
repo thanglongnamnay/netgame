@@ -16,7 +16,7 @@
 const express = require('express');
 const childProcess = require('child_process');
 const Room = require('./Room.bs');
-const constants = require('./constants')
+const constants = require('../constants')
 
 // create application/json parser
 

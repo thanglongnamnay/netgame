@@ -5,6 +5,7 @@ const socket = require("./socket");
 const ClientData = require("../common/ClientData.bs");
 const { ClientSendT } = require("../flat-models/client-send");
 const converter = require("../converter");
+const constants = require("../constants");
 
 const stringify = v => JSON.stringify(v, null, 2);
 const Engine = Matter.Engine,
@@ -290,7 +291,7 @@ window.addEventListener('DOMContentLoaded', () => {
     return response.json(); // parses JSON response into native JavaScript objects
   }
   document.getElementById('find-match').onclick = async (e) => {
-    postData('http://127.0.0.1:8080/find-match', {
+    postData(`${constants.host}:8080/find-match`, {
       name: document.getElementById('name').value,
     }).then(info => {
       console.log("fetched", info);

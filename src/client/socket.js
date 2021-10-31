@@ -4,6 +4,7 @@ exports.send = exports.create = void 0;
 var flatbuffers = require("flatbuffers");
 var dgram = require("dgram");
 var server_send_1 = require("../flat-models/server-send");
+var constants = require("../constants");
 var create = function (cb) {
     var client = dgram.createSocket('udp4');
     client.on('error', function (err) {
@@ -15,7 +16,7 @@ var create = function (cb) {
         var receiveObj = server_send_1.ServerSend.getRootAsServerSend(new flatbuffers.ByteBuffer(msg)).unpack();
         cb(receiveObj);
     });
-    client.connect(41234);
+    client.connect(41234, constants.host);
     return client;
 };
 exports.create = create;

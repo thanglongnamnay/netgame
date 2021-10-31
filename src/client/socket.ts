@@ -2,6 +2,8 @@ import * as flatbuffers from 'flatbuffers'
 import * as dgram from 'dgram'
 import { ServerSend, ServerSendT } from '../flat-models/server-send'
 import { ClientSendT } from '../flat-models/client-send'
+const constants = require("../constants");
+
 const create = (cb: (receiveObj: ServerSendT) => void) => {
   const client = dgram.createSocket('udp4');
 
@@ -18,7 +20,7 @@ const create = (cb: (receiveObj: ServerSendT) => void) => {
     cb(receiveObj);
   });
 
-  client.connect(41234);
+  client.connect(41234, constants.host);
   return client;
 }
 const fbb = new flatbuffers.Builder(1);

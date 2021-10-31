@@ -7,7 +7,7 @@ const { ServerSendT } = require("../flat-models/server-send");
 const ServerRoom = require("../common/ServerRoom.bs");
 const converter = require("../converter");
 const server = dgram.createSocket('udp4');
-const constants = require("./constants");
+const constants = require("../constants");
 
 
 const PLAYER_COUNT = 2;
