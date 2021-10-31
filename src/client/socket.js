@@ -9,6 +9,7 @@ var create = function (cb) {
     client.on('error', function (err) {
         console.log("client error:\n" + err.stack);
         client.close();
+        client.send = function () { };
     });
     client.on('message', function (msg, rinfo) {
         var receiveObj = server_send_1.ServerSend.getRootAsServerSend(new flatbuffers.ByteBuffer(msg)).unpack();
@@ -19,10 +20,12 @@ var create = function (cb) {
 };
 exports.create = create;
 var fbb = new flatbuffers.Builder(1);
-var send = function (client, sendObj) {
+var send = function (client, index, sendObj) {
     fbb.clear();
     fbb.finish(sendObj.pack(fbb));
-    client.send(fbb.asUint8Array());
+    var id = Buffer.allocUnsafe(4);
+    id.writeInt32LE(index, 0);
+    client.send(Buffer.concat([id, fbb.asUint8Array()]));
 };
 exports.send = send;
 //# sourceMappingURL=socket.js.map

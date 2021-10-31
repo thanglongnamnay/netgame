@@ -7,6 +7,9 @@ const { ServerSendT } = require("../flat-models/server-send");
 const ServerRoom = require("../common/ServerRoom.bs");
 const converter = require("../converter");
 const server = dgram.createSocket('udp4');
+const constants = require("./constants");
+
+
 const PLAYER_COUNT = 2;
 const send = function (rinfo, sendObj) {
     // fbb.clear();
@@ -23,20 +26,21 @@ server.on('listening', function () {
     console.log("server listening " + address.address + ":" + address.port);
 });
 server.on('message', function (msg, rinfo) {
-    rooms.forEach(room => room.onMessage(msg, rinfo));
+    // console.log("msg from", rinfo, msg.readInt32LE(0));
+    rooms.filter(r => r.id === msg.readInt32LE(0)).forEach(room => room.onMessage(msg.slice(4), rinfo));
 });
 server.bind(41234);
 const nextId = (() => {
     let id = 0;
     return () => ++id;
 })();
-const makeRoom = () => {
+const makeRoom = (id) => {
     let t = ServerRoom.nope(PLAYER_COUNT);
     const rinfoMap = [];
     const interval = setInterval(function update() {
         try {
             const sendDatas = ServerRoom.getSendData(t);
-            console.log("update", t, sendDatas);
+            // console.log("update", t, sendDatas);
             sendDatas.forEach((sendData, playerIndex) => {
                 const rinfo = rinfoMap[playerIndex];
                 const sendObj = new ServerSendT(
@@ -44,16 +48,16 @@ const makeRoom = () => {
                     sendData.players.map(converter.frames),
                     Math.random() * 1000 | 0,
                 );
-                console.log("sendData", playerIndex, rinfo, sendObj)
+                // console.log("sendData", playerIndex, rinfo, sendObj)
                 send(rinfo, sendObj);
             });
         } catch (e) {
-            console.log(e.message, "but it's ok.");
+            // console.log(e, t, "but it's ok.");
         }
     }, 1000 / 10);
 
     return {
-        id: nextId(),
+        id,
         destroy() {
             clearInterval(interval);
         },
@@ -65,7 +69,7 @@ const makeRoom = () => {
                 myFrames: converter.rframes(clientSendObj.myFrames),
                 otherAcks: clientSendObj.otherAcks,
             }
-            console.log("server got from " + rinfo.address + ":" + rinfo.port, clientSendObj, clientSent);
+            // console.log("server got from " + rinfo.address + ":" + rinfo.port, clientSendObj.myIndex);
 
             t = ServerRoom.step(t, ServerRoom.receive(clientSent));
         }
@@ -76,4 +80,18 @@ const destroyRoom = room => {
     rooms = rooms.filter(r => r !== room);
 }
 let rooms = [];
-rooms.push(makeRoom());
+
+const addRoom = id => {
+    const room = makeRoom(id)
+    rooms.push(room);
+    setTimeout(() => {
+        destroyRoom(room);
+    }, 30000);
+}
+process.on('message', msg => {
+    console.log("child got", msg);
+    if (msg.id === constants.makeRoom) {
+        console.log("making room");
+        addRoom(msg.roomId);
+    }
+});

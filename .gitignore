@@ -284,7 +284,6 @@ simulator/win32/vcruntime140.dll
 simulator/win32/vcruntime140d.dll
 type/config.d.ts
 
-**.bs.js
 .merlin
 **/~$localize.xlsx
 .bsb.lock

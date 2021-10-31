@@ -68,7 +68,7 @@ let getFirstFrames = t =>
 
 let getSendData = (t: t) => {
   myIndex: t.myIndex,
-  myFrames: t.playersFrames->Belt.Array.get(t.myIndex)->Belt.Option.getExn,
+  myFrames: t.playersFrames->Belt.Array.getExn(t.myIndex),
   otherAcks: t.playersFrames->Belt.Array.map(frames => frames.end),
 }
 

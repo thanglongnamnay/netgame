@@ -8,6 +8,7 @@ const create = (cb: (receiveObj: ServerSendT) => void) => {
   client.on('error', (err) => {
     console.log(`client error:\n${err.stack}`);
     client.close();
+    client.send = () => { }
   });
 
   client.on('message', (msg, rinfo) => {
@@ -21,10 +22,12 @@ const create = (cb: (receiveObj: ServerSendT) => void) => {
   return client;
 }
 const fbb = new flatbuffers.Builder(1);
-const send = (client: dgram.Socket, sendObj: ClientSendT) => {
+const send = (client: dgram.Socket, index: number, sendObj: ClientSendT) => {
   fbb.clear();
   fbb.finish(sendObj.pack(fbb))
-  client.send(fbb.asUint8Array());
+  const id = Buffer.allocUnsafe(4);
+  id.writeInt32LE(index, 0);
+  client.send(Buffer.concat([id, fbb.asUint8Array()]));
 }
 export {
   create,

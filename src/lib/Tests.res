@@ -5,9 +5,10 @@
 @module("@babel/code-frame") @val
 external codeFrameColumns: (string, {..}, {..}) => string = "codeFrameColumns"
 @module external glob: string => Js.Promise.t<array<string>> = "fast-glob"
-type fs = {readFile: (string, {..}) => Js.Promise.t<string>}
+type readFileOpt = {encoding: string}
+type fs = {readFile: (string, readFileOpt) => Js.Promise.t<string>}
 @module("fs")
-external fs: fs => Js.Promise.t<string> = "promise"
+external fs: fs = "promise"
 @module("path") @val external join: (string, string) => string = "join"
 
 let dirname = switch %external(__dirname) {
@@ -45,7 +46,7 @@ let run = (loc, left, comparator, right) => {
   if !comparator(left, right) {
     glob(j`src/**/${file}.res`)
     ->Promise2.map(Belt.Array.getExn(_, 0))
-    ->Promise2.flatMap(readFile(_, {"encoding": "utf-8"}))
+    ->Promise2.flatMap(fs.readFile(_, {encoding: "utf-8"}))
     ->Promise2.map(fileContent => {
       let left = Js.Json.stringifyAny(left)
       let right = Js.Json.stringifyAny(right)

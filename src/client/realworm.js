@@ -17,6 +17,7 @@ const Engine = Matter.Engine,
   Composite = Matter.Composite,
   Query = Matter.Query,
   Svg = Matter.Svg,
+  Body = Matter.Body,
   Bodies = Matter.Bodies;
 
 function pathToSvg(paths, scale = 1) {
@@ -111,11 +112,25 @@ const createBullet = (p, v, options = {}) => {
 }
 
 const shoot = (player, lookAt) => {
+  console.log("player shoot at frame: ", frameCount, stepCount);
   const { add, sub, mult, normalise } = Matter.Vector;
   const playerPos = player.position;
   const velocity = mult(sub(lookAt, playerPos), 1 / 10);
   const shootPos = add(playerPos, mult(normalise(velocity), 10));
   return createBullet(shootPos, velocity);
+}
+
+let frameCount = 0;
+let stepCount = 0;
+const jump = (player, direction) => {
+  const strength = 5;
+  if (direction) {
+    // right
+    Body.setVelocity(player, v2(strength, -strength));
+  } else {
+    // left
+    Body.setVelocity(player, v2(-strength, -strength));
+  }
 }
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -150,7 +165,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const playerCount = 2;
   let curTouch = 0;
   let curPos = { x: 0, y: 0 };
-  let currentKeys = new Set();
+  const currentKeys = new Set();
   const toKeyCode = e => {
     switch (e.code) {
       case "KeyS":
@@ -184,7 +199,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
   const log = console.log
-  // const gameLoop = Game.make(playerCount, canvas);
   const dt = 1000 / 30;
   let t;
   const client = socket.create((receiveObj) => {
@@ -197,74 +211,99 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   const step = () => {
     t = ClientData.step(t, ClientData.addFrame(getCurrentInput()));
-    if (curTouch !== 0) curTouch = 0; // reset
-    try {
-      const payloads = ClientData.getFirstFrames(t); // could throw here
-      gameLoop(dt, payloads);
-      t = ClientData.step(t, ClientData.consume);
-    } catch (e) {
-      // log(e, "but it's ok");
+    if (curTouch > 0) {
+      console.log("add shoot at frame", frameCount, stepCount);
     }
+    curTouch = 0; // reset inputs
+    currentKeys.clear();
+    const payloads = ClientData.getFirstFrames(t); // could throw here
+    gameLoop(dt, payloads);
+    t = ClientData.step(t, ClientData.consume);
   }
-  document.getElementById("startTime").value = Date.now() + 15000;
   let started = false;
-  const startStreaming = (myIndex) => {
+  const startStreaming = (roomId, myIndex, startTime) => {
     if (started) return;
     started = true;
     log('start', myIndex);
     t = ClientData.nope(myIndex, playerCount);
-    setInterval(() => {
-      try {
-        const sendData = ClientData.getSendData(t);
-        const sendObj = new ClientSendT(
-          sendData.myIndex,
-          converter.frames(sendData.myFrames),
-          sendData.otherAcks,
-        )
-        socket.send(client, sendObj);
-        // log("send", stringify(sendObj));
-      } catch (e) {
-        log(stringify(e), 'its ok');
-      }
-    }, dt * 3);
-
-    let accumulateTime = 0;
-    let accumulateTimeEngine = 0;
-    let time = Date.now();
-    const startTime = document.getElementById("startTime").value;
-    const dtEngine = 1000 / 60;
+    const dtEngine = 16;
     (function run() {
       const now = Date.now();
       if (now < startTime) {
         console.log("now", now, startTime);
-        time = now;
-        window.requestAnimationFrame(run);
+        setTimeout(run, dtEngine);
         return;
       }
-      accumulateTime += now - time;
-      while (accumulateTime > dt) {
-        step();
-        accumulateTime -= dt;
+      let canStep = true;
+      if (frameCount % 2 == 0) {
+        try {
+          step();
+          stepCount++;
+        } catch (e) {
+          console.log("error", e);
+          canStep = false;
+        }
       }
-      accumulateTimeEngine += now - time;
-      while (accumulateTimeEngine > dtEngine) {
-        accumulateTimeEngine -= dtEngine;
+      if (canStep) {
         Engine.update(engine, dtEngine);
+        frameCount++;
       }
 
       const bufferSize = Math.min(...(t.playersFrames.map(f => f.payloads.length)))
-      if (bufferSize > 1000) {
-        time -= now - dt;
-        run(now);
+      if (bufferSize > 3) {
+        setTimeout(run, 0);
       } else {
-        window.requestAnimationFrame(run);
-        time = now;
+        setTimeout(run, dtEngine);
       }
 
-      // time = now;
+      if (stepCount % 3 === 0) {
+        try {
+          const sendData = ClientData.getSendData(t);
+          const sendObj = new ClientSendT(
+            sendData.myIndex,
+            converter.frames(sendData.myFrames),
+            sendData.otherAcks,
+          );
+          socket.send(client, roomId, sendObj);
+          // log("send", stringify(sendObj));
+        } catch (e) {
+          log(stringify(e), 'its ok');
+        }
+      }
     })();
   }
-  document.getElementById('start').onclick = e => startStreaming(+document.getElementById('playerIndex').value)
+  async function postData(url = '', data = {}) {
+    // Default options are marked with *
+    const response = await fetch(url, {
+      method: 'POST', // *GET, POST, PUT, DELETE, etc.
+      mode: 'cors', // no-cors, *cors, same-origin
+      cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+      credentials: 'same-origin', // include, *same-origin, omit
+      headers: {
+        'Content-Type': 'application/json'
+        // 'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      redirect: 'follow', // manual, *follow, error
+      referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+      body: JSON.stringify(data) // body data type must match "Content-Type" header
+    });
+    return response.json(); // parses JSON response into native JavaScript objects
+  }
+  document.getElementById('find-match').onclick = async (e) => {
+    postData('http://127.0.0.1:8080/find-match', {
+      name: document.getElementById('name').value,
+    }).then(info => {
+      console.log("fetched", info);
+      const {
+        id,
+        maxPlayer,
+        startTime,
+        index,
+        name,
+      } = info;
+      startStreaming(id, index, startTime);
+    });
+  }
 
   const map = createMap("asdklfjas");
   let terrain = Bodies.fromVertices(0, 400, map.getPath(), {
@@ -391,6 +430,8 @@ window.addEventListener('DOMContentLoaded', () => {
   Matter.Events.on(mouseConstraint, 'mousedown', e => {
     curTouch = 1;
     curPos = { ...e.source.mouse.position };
+    curPos.x = curPos.x | 0;
+    curPos.y = curPos.y | 0;
     console.log("mousedown", curTouch, curPos);
   });
   const gameLoop = (dt, inputs) => {
@@ -400,6 +441,11 @@ window.addEventListener('DOMContentLoaded', () => {
         const mousePos = input.touchPos;
         const bullet = shoot(players[index], mousePos);
         addBullet(bullet);
+      }
+      if (input.keys.includes("a".charCodeAt(0))) {
+        jump(players[index], 0);
+      } else if (input.keys.includes("d".charCodeAt(0))) {
+        jump(players[index], 1);
       }
     });
   }
