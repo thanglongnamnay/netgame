@@ -12,7 +12,6 @@ const constants = require("../constants");
 
 const PLAYER_COUNT = 2;
 const send = function (rinfo, sendObj) {
-    // fbb.clear();
     const fbb = new flatbuffers.Builder(1);
     fbb.finish(sendObj.pack(fbb));
     server.send(fbb.asUint8Array(), rinfo.port, rinfo.address);
@@ -30,10 +29,6 @@ server.on('message', function (msg, rinfo) {
     rooms.filter(r => r.id === msg.readInt32LE(0)).forEach(room => room.onMessage(msg.slice(4), rinfo));
 });
 server.bind(8081);
-const nextId = (() => {
-    let id = 0;
-    return () => ++id;
-})();
 const makeRoom = (id) => {
     let t = ServerRoom.nope(PLAYER_COUNT);
     const rinfoMap = [];
