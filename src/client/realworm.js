@@ -73,10 +73,6 @@ const createMap = (seed) => {
     }
   };
 }
-const logic = new WeakMap();
-const getLogic = b => logic.get(b);
-const renderObject = new WeakMap();
-const getRenderObject = b => renderObject.get(b);
 
 const playerGeometry = new PIXI.GraphicsGeometry();
 const playerFill = new PIXI.FillStyle();
@@ -92,16 +88,15 @@ const createPlayer = (p, options = {}) => {
   const body = Matter.Bodies.rectangle(p.x, p.y, 10, 10);
   body.label = "player";
   Matter.Body.setInertia(body, 200);
-  logic.set(body, {
-    getHp() { return hp; },
-    mapHp(f) { hp = f(hp); },
-    getBody() { return body; }
-  });
 
   const obj = new PIXI.Graphics(playerGeometry);
-  renderObject.set(body, obj);
 
-  return body;
+  return {
+    getHp() { return hp; },
+    mapHp(f) { hp = f(hp); },
+    body,
+    renderer: obj,
+  };
 }
 
 const bulletGeometry = new PIXI.GraphicsGeometry();
@@ -117,20 +112,19 @@ const createBullet = (p, v, options = {}) => {
   body.label = "bullet";
   Matter.Body.setVelocity(body, v);
 
-  logic.set(body, {
+  const obj = new PIXI.Graphics(bulletGeometry);
+
+  return {
     getDamage() { return damage; },
-    getBody() { return body; },
-  });
-
-  renderObject.set(body, new PIXI.Graphics(bulletGeometry));
-
-  return body;
+    body,
+    renderer: obj,
+  };
 }
 
 const shoot = (player, lookAt) => {
   console.log("player shoot at frame: ", frameCount, stepCount);
   const { add, sub, mult, normalise } = Matter.Vector;
-  const playerPos = player.position;
+  const playerPos = player.body.position;
   const velocity = mult(sub(lookAt, playerPos), 1 / 10);
   const shootPos = add(playerPos, mult(normalise(velocity), 10));
   return createBullet(shootPos, velocity);
@@ -142,10 +136,10 @@ const jump = (player, direction) => {
   const strength = 5;
   if (direction) {
     // right
-    Body.setVelocity(player, v2(strength, -strength));
+    Body.setVelocity(player.body, v2(strength, -strength));
   } else {
     // left
-    Body.setVelocity(player, v2(-strength, -strength));
+    Body.setVelocity(player.body, v2(-strength, -strength));
   }
 }
 
@@ -179,10 +173,10 @@ window.addEventListener('DOMContentLoaded', () => {
     backgroundColor: 0x000000,
   });
   app.ticker.add(() => {
-    const updatePosition = body => {
-      const obj = getRenderObject(body);
-      obj.position.set(body.position.x, body.position.y);
-      obj.rotation = body.angle;
+    const updatePosition = object => {
+      const { body, renderer } = object;
+      renderer.position.set(body.position.x, body.position.y);
+      renderer.rotation = body.angle;
     }
     players.forEach(updatePosition);
     bullets.forEach(updatePosition);
@@ -351,8 +345,8 @@ window.addEventListener('DOMContentLoaded', () => {
   terrain.label = "ground";
   const players = [];
   const addPlayer = player => {
-    Composite.add(world, player);
-    app.stage.addChild(getRenderObject(player));
+    Composite.add(world, player.body);
+    app.stage.addChild(player.renderer);
     players.push(player);
   }
   const p1 = createPlayer(v2(50, 50));
@@ -361,8 +355,8 @@ window.addEventListener('DOMContentLoaded', () => {
   addPlayer(p2);
   let bullets = [];
   const addBullet = bullet => {
-    Composite.add(world, bullet);
-    app.stage.addChild(getRenderObject(bullet));
+    Composite.add(world, bullet.body);
+    app.stage.addChild(bullet.renderer);
     bullets.push(bullet);
   }
 
@@ -389,28 +383,8 @@ window.addEventListener('DOMContentLoaded', () => {
     refreshTerrain();
   }
 
-  const checkCollide = () => {
-    const collisions = Matter.Query.collides(terrain, bullets);
-    if (!collisions.length) return;
-    console.log(collisions)
-    const clipPositions = collisions.map(collision => {
-      const body = collision.bodyA;
-      return {
-        x: body.position.x - terrain.bounds.min.x - 500,
-        y: body.position.y - terrain.bounds.max.y + 400,
-      }
-    });
-    clipUpdate(clipPositions, 40);
-    const hitBodies = collisions.map(collision => collision.bodyA);
-    hitBodies.forEach(body => Composite.remove(world, body));
-    hitBodies.forEach(body => {
-      console.log(bullets.filter(b => b === body))
-      bullets = bullets.filter(b => b !== body);
-    });
-  }
-
   const damn = (body) => {
-    if (!bullets.includes(body)) return;
+    if (!bullets.find(b => b.body === body)) return;
     Composite.remove(world, body);
     bullets = bullets.filter(b => b !== body);
     return body.position;
@@ -420,7 +394,7 @@ window.addEventListener('DOMContentLoaded', () => {
     y: p.y - terrain.bounds.max.y + 400,
   });
   const hitPlayer = (body, damage) => {
-    const player = getLogic(body);
+    const player = players.find(p => p.body === body);
     console.log("damage", damage, player.getHp());
     player.mapHp(v => v - damage);
     console.log("damage", damage, player.getHp());
@@ -442,7 +416,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }).filter(x => x);
     clipPositions.forEach(pos => {
       const hitbox = circle(pos.x, pos.y, 20);
-      Matter.Query.collides(hitbox, players)
+      Matter.Query.collides(hitbox, players.map(p => p.body))
         .filter(query => query.collided)
         .forEach(query => {
           const { bodyA, bodyB } = query;
