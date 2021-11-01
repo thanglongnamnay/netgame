@@ -6,18 +6,15 @@ const ClientData = require("../common/ClientData.bs");
 const { ClientSendT } = require("../flat-models/client-send");
 const converter = require("../converter");
 const constants = require("../constants");
+const PIXI = require('pixi.js');
 
 const stringify = v => JSON.stringify(v, null, 2);
 const Engine = Matter.Engine,
   Render = Matter.Render,
-  Runner = Matter.Runner,
-  Composites = Matter.Composites,
   Common = Matter.Common,
   MouseConstraint = Matter.MouseConstraint,
   Mouse = Matter.Mouse,
   Composite = Matter.Composite,
-  Query = Matter.Query,
-  Svg = Matter.Svg,
   Body = Matter.Body,
   Bodies = Matter.Bodies;
 
@@ -76,8 +73,17 @@ const createMap = (seed) => {
     }
   };
 }
-const logic = new Map();
+const logic = new WeakMap();
 const getLogic = b => logic.get(b);
+const renderObject = new WeakMap();
+const getRenderObject = b => renderObject.get(b);
+
+const playerGeometry = new PIXI.GraphicsGeometry();
+const playerFill = new PIXI.FillStyle();
+playerFill.color = 0xaaaa00;
+playerFill.visible = true;
+playerGeometry.drawShape(new PIXI.Rectangle(0, 0, 10, 10), playerFill, new PIXI.LineStyle(), new PIXI.Matrix());
+
 const createPlayer = (p, options = {}) => {
   let { hp } = {
     hp: 1,
@@ -91,9 +97,15 @@ const createPlayer = (p, options = {}) => {
     mapHp(f) { hp = f(hp); },
     getBody() { return body; }
   });
+
+  const obj = new PIXI.Graphics(playerGeometry);
+  renderObject.set(body, obj);
+
   return body;
 }
 
+const bulletGeometry = new PIXI.GraphicsGeometry();
+bulletGeometry.drawShape(new PIXI.Circle(0, 0, 5), playerFill, new PIXI.LineStyle(), new PIXI.Matrix());
 const createBullet = (p, v, options = {}) => {
   let { damage } = {
     damage: 45,
@@ -109,6 +121,9 @@ const createBullet = (p, v, options = {}) => {
     getDamage() { return damage; },
     getBody() { return body; },
   });
+
+  renderObject.set(body, new PIXI.Graphics(bulletGeometry));
+
   return body;
 }
 
@@ -143,23 +158,41 @@ window.addEventListener('DOMContentLoaded', () => {
   const engine = Engine.create(),
     world = engine.world;
 
+
+  const width = 800;
+  const height = 600;
   // create renderer
   const render = Render.create({
     element: document.body,
     engine: engine,
     options: {
       wireframes: 1,
-      width: 800,
-      height: 600,
+      width,
+      height,
     }
   });
-
   Render.run(render);
-  // const runner = Runner.create({
-  //   isFixed: true,
-  //   delta: 1000 / 60,
-  // });
-  // Runner.run(runner, engine);
+
+  const app = new PIXI.Application({
+    width,
+    height,
+    backgroundColor: 0x000000,
+  });
+  app.ticker.add(() => {
+    const updatePosition = body => {
+      const obj = getRenderObject(body);
+      obj.position.set(body.position.x, body.position.y);
+      obj.rotation = body.angle;
+    }
+    players.forEach(updatePosition);
+    bullets.forEach(updatePosition);
+  });
+  document.body.appendChild(app.view);
+  const runner = Matter.Runner.create({
+    isFixed: true,
+    delta: 1000 / 60,
+  });
+  Matter.Runner.run(runner, engine);
 
   // START HERE
 
@@ -316,14 +349,20 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }, true);
   terrain.label = "ground";
+  const players = [];
+  const addPlayer = player => {
+    Composite.add(world, player);
+    app.stage.addChild(getRenderObject(player));
+    players.push(player);
+  }
   const p1 = createPlayer(v2(50, 50));
-  Composite.add(world, p1);
   const p2 = createPlayer(v2(200, 50));
-  Composite.add(world, p2);
-  const players = [p1, p2];
+  addPlayer(p1);
+  addPlayer(p2);
   let bullets = [];
   const addBullet = bullet => {
     Composite.add(world, bullet);
+    app.stage.addChild(getRenderObject(bullet));
     bullets.push(bullet);
   }
 

@@ -35,6 +35,8 @@
     "fast-glob": "^3.2.7",
     "flatbuffers": "^2.0.3",
     "matter-js": "^0.17.1",
+    "pixi-matter": "^0.1.0",
+    "pixi.js": "^5.3.10",
     "poly-decomp": "^0.3.0",
     "reason-nodejs": "file:../conduit/reason-nodejs",
     "rescript": "^9.1.4",
