@@ -35,6 +35,7 @@ function pathToSvg(paths, scale = 1) {
   svg += '</svg>';
   document.getElementById("svg").innerHTML = svg;
 }
+const clamp = (a, b, x) => x < a ? a : (x > b ? b : a);
 const v2 = Matter.Vector.create
 const V2 = p => ({ X: p.x, Y: p.y });
 const rv2 = p => v2(p.X, p.Y);
@@ -155,17 +156,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const width = 800;
   const height = 600;
-  // create renderer
-  const render = Render.create({
-    element: document.body,
-    engine: engine,
-    options: {
-      wireframes: 1,
-      width,
-      height,
-    }
-  });
-  Render.run(render);
 
   const app = new PIXI.Application({
     width,
@@ -175,6 +165,13 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   document.body.appendChild(app.view);
 
+  app.renderer.plugins.interaction.on('pointerup', e => {
+    curTouch = 1;
+    curPos = e.data.getLocalPosition(terrainRenderer);
+    curPos.x = curPos.x | 0;
+    curPos.y = curPos.y | 0;
+    console.log("mousedown", curTouch, curPos);
+  });
   app.ticker.add(() => {
     const updatePosition = object => {
       const { body, renderer } = object;
@@ -183,12 +180,14 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     players.forEach(updatePosition);
     bullets.forEach(updatePosition);
+    app.stage.pivot.x = clamp(0, 800, p1.renderer.position.x - width / 2);
+    app.stage.pivot.y = clamp(0, 600, p1.renderer.position.y - height / 2);
   });
-  const runner = Matter.Runner.create({
-    isFixed: true,
-    delta: 1000 / 60,
-  });
-  Matter.Runner.run(runner, engine);
+  // const runner = Matter.Runner.create({
+  //   isFixed: true,
+  //   delta: 1000 / 60,
+  // });
+  // Matter.Runner.run(runner, engine);
 
   // START HERE
 
@@ -444,22 +443,6 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   refreshTerrain();
 
-  const mouse = Mouse.create(render.canvas);
-  const mouseConstraint = MouseConstraint.create(engine, {
-    mouse,
-    constrain: {
-      stiffness: 0.2,
-    },
-  });
-  Composite.add(world, mouseConstraint);
-  render.mouse = mouse;
-  Matter.Events.on(mouseConstraint, 'mousedown', e => {
-    curTouch = 1;
-    curPos = { ...e.source.mouse.position };
-    curPos.x = curPos.x | 0;
-    curPos.y = curPos.y | 0;
-    console.log("mousedown", curTouch, curPos);
-  });
   const gameLoop = (dt, inputs) => {
     inputs.forEach((input, index) => {
       if (input.touches > 0) {
@@ -475,13 +458,5 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-  // Matter.Events.on(engine, 'afterUpdate', e => {
-  //   Render.lookAt(render, p1.body, v2(300, 300));
-  // });
-
-  // Render.lookAt(render, {
-  //   min: { x: 0, y: 0 },
-  //   max: { x: 400, y: 300 }
-  // });
 });
 
