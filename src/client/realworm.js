@@ -78,14 +78,14 @@ const playerGeometry = new PIXI.GraphicsGeometry();
 const playerFill = new PIXI.FillStyle();
 playerFill.color = 0xaaaa00;
 playerFill.visible = true;
-playerGeometry.drawShape(new PIXI.Rectangle(0, 0, 10, 10), playerFill, new PIXI.LineStyle(), new PIXI.Matrix());
+playerGeometry.drawShape(new PIXI.Rectangle(-10, -10, 20, 20), playerFill, new PIXI.LineStyle(), new PIXI.Matrix());
 
 const createPlayer = (p, options = {}) => {
   let { hp } = {
     hp: 1,
     ...options,
   };
-  const body = Matter.Bodies.rectangle(p.x, p.y, 10, 10);
+  const body = Matter.Bodies.rectangle(p.x, p.y, 20, 20);
   body.label = "player";
   Matter.Body.setInertia(body, 200);
 
@@ -171,8 +171,10 @@ window.addEventListener('DOMContentLoaded', () => {
     width,
     height,
     backgroundColor: 0x000000,
+    antialias: true,
   });
   document.body.appendChild(app.view);
+
   app.ticker.add(() => {
     const updatePosition = object => {
       const { body, renderer } = object;
