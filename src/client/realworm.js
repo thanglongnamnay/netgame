@@ -172,6 +172,7 @@ window.addEventListener('DOMContentLoaded', () => {
     height,
     backgroundColor: 0x000000,
   });
+  document.body.appendChild(app.view);
   app.ticker.add(() => {
     const updatePosition = object => {
       const { body, renderer } = object;
@@ -181,7 +182,6 @@ window.addEventListener('DOMContentLoaded', () => {
     players.forEach(updatePosition);
     bullets.forEach(updatePosition);
   });
-  document.body.appendChild(app.view);
   const runner = Matter.Runner.create({
     isFixed: true,
     delta: 1000 / 60,
@@ -342,6 +342,8 @@ window.addEventListener('DOMContentLoaded', () => {
       lineWidth: 1
     }
   }, true);
+  const terrainRenderer = new PIXI.Graphics();
+  app.stage.addChild(terrainRenderer);
   terrain.label = "ground";
   const players = [];
   const addPlayer = player => {
@@ -361,6 +363,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   const refreshTerrain = () => {
+    console.log("refreshTerrain");
     Composite.remove(world, terrain);
     terrain = Bodies.fromVertices(0, 0, map.getPath(), {
       isStatic: true,
@@ -373,6 +376,11 @@ window.addEventListener('DOMContentLoaded', () => {
     terrain.label = "ground";
     Matter.Body.setPosition(terrain, v2(-500 + terrain.position.x - terrain.bounds.min.x, 400 + terrain.position.y - terrain.bounds.max.y))
     Composite.add(world, terrain);
+
+    terrainRenderer.clear();
+    terrainRenderer.beginFill(0x666600);
+    terrainRenderer.drawPolygon(...map.getPath().map(path => path.map(p => new PIXI.Point(p.x, p.y))));
+    terrainRenderer.endFill();
   }
 
   const clipUpdate = (positions, radius) => {
@@ -428,7 +436,9 @@ window.addEventListener('DOMContentLoaded', () => {
           }
         });
     });
-    clipUpdate(clipPositions.map(toClipPos), 20);
+    if (clipPositions.length) {
+      clipUpdate(clipPositions.map(toClipPos), 20);
+    }
   });
   refreshTerrain();
 
@@ -463,9 +473,9 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-  Matter.Events.on(engine, 'afterUpdate', e => {
-    Render.lookAt(render, p1, v2(300, 300));
-  });
+  // Matter.Events.on(engine, 'afterUpdate', e => {
+  //   Render.lookAt(render, p1.body, v2(300, 300));
+  // });
 
   // Render.lookAt(render, {
   //   min: { x: 0, y: 0 },
