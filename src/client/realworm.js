@@ -6,18 +6,15 @@ const ClientData = require("../common/ClientData.bs");
 const { ClientSendT } = require("../flat-models/client-send");
 const converter = require("../converter");
 const constants = require("../constants");
+const PIXI = require('pixi.js');
 
 const stringify = v => JSON.stringify(v, null, 2);
 const Engine = Matter.Engine,
   Render = Matter.Render,
-  Runner = Matter.Runner,
-  Composites = Matter.Composites,
   Common = Matter.Common,
   MouseConstraint = Matter.MouseConstraint,
   Mouse = Matter.Mouse,
   Composite = Matter.Composite,
-  Query = Matter.Query,
-  Svg = Matter.Svg,
   Body = Matter.Body,
   Bodies = Matter.Bodies;
 
@@ -38,6 +35,7 @@ function pathToSvg(paths, scale = 1) {
   svg += '</svg>';
   document.getElementById("svg").innerHTML = svg;
 }
+const clamp = (a, b, x) => x < a ? a : (x > b ? b : a);
 const v2 = Matter.Vector.create
 const V2 = p => ({ X: p.x, Y: p.y });
 const rv2 = p => v2(p.X, p.Y);
@@ -76,24 +74,34 @@ const createMap = (seed) => {
     }
   };
 }
-const logic = new Map();
-const getLogic = b => logic.get(b);
+
+const playerGeometry = new PIXI.GraphicsGeometry();
+const playerFill = new PIXI.FillStyle();
+playerFill.color = 0xaaaa00;
+playerFill.visible = true;
+playerGeometry.drawShape(new PIXI.Rectangle(-10, -10, 20, 20), playerFill, new PIXI.LineStyle(), new PIXI.Matrix());
+
 const createPlayer = (p, options = {}) => {
   let { hp } = {
     hp: 1,
     ...options,
   };
-  const body = Matter.Bodies.rectangle(p.x, p.y, 10, 10);
+  const body = Matter.Bodies.rectangle(p.x, p.y, 20, 20);
   body.label = "player";
   Matter.Body.setInertia(body, 200);
-  logic.set(body, {
+
+  const obj = new PIXI.Graphics(playerGeometry);
+
+  return {
     getHp() { return hp; },
     mapHp(f) { hp = f(hp); },
-    getBody() { return body; }
-  });
-  return body;
+    body,
+    renderer: obj,
+  };
 }
 
+const bulletGeometry = new PIXI.GraphicsGeometry();
+bulletGeometry.drawShape(new PIXI.Circle(0, 0, 5), playerFill, new PIXI.LineStyle(), new PIXI.Matrix());
 const createBullet = (p, v, options = {}) => {
   let { damage } = {
     damage: 45,
@@ -105,17 +113,19 @@ const createBullet = (p, v, options = {}) => {
   body.label = "bullet";
   Matter.Body.setVelocity(body, v);
 
-  logic.set(body, {
+  const obj = new PIXI.Graphics(bulletGeometry);
+
+  return {
     getDamage() { return damage; },
-    getBody() { return body; },
-  });
-  return body;
+    body,
+    renderer: obj,
+  };
 }
 
 const shoot = (player, lookAt) => {
   console.log("player shoot at frame: ", frameCount, stepCount);
   const { add, sub, mult, normalise } = Matter.Vector;
-  const playerPos = player.position;
+  const playerPos = player.body.position;
   const velocity = mult(sub(lookAt, playerPos), 1 / 10);
   const shootPos = add(playerPos, mult(normalise(velocity), 10));
   return createBullet(shootPos, velocity);
@@ -127,10 +137,10 @@ const jump = (player, direction) => {
   const strength = 5;
   if (direction) {
     // right
-    Body.setVelocity(player, v2(strength, -strength));
+    Body.setVelocity(player.body, v2(strength, -strength));
   } else {
     // left
-    Body.setVelocity(player, v2(-strength, -strength));
+    Body.setVelocity(player.body, v2(-strength, -strength));
   }
 }
 
@@ -143,23 +153,41 @@ window.addEventListener('DOMContentLoaded', () => {
   const engine = Engine.create(),
     world = engine.world;
 
-  // create renderer
-  const render = Render.create({
-    element: document.body,
-    engine: engine,
-    options: {
-      wireframes: 1,
-      width: 800,
-      height: 600,
-    }
-  });
 
-  Render.run(render);
-  // const runner = Runner.create({
+  const width = 800;
+  const height = 600;
+
+  const app = new PIXI.Application({
+    width,
+    height,
+    backgroundColor: 0x000000,
+    antialias: true,
+  });
+  document.body.appendChild(app.view);
+
+  app.renderer.plugins.interaction.on('pointerup', e => {
+    curTouch = 1;
+    curPos = e.data.getLocalPosition(terrainRenderer);
+    curPos.x = curPos.x | 0;
+    curPos.y = curPos.y | 0;
+    console.log("mousedown", curTouch, curPos);
+  });
+  app.ticker.add(() => {
+    const updatePosition = object => {
+      const { body, renderer } = object;
+      renderer.position.set(body.position.x, body.position.y);
+      renderer.rotation = body.angle;
+    }
+    players.forEach(updatePosition);
+    bullets.forEach(updatePosition);
+    app.stage.pivot.x = clamp(0, 800, p1.renderer.position.x - width / 2);
+    app.stage.pivot.y = clamp(0, 600, p1.renderer.position.y - height / 2);
+  });
+  // const runner = Matter.Runner.create({
   //   isFixed: true,
   //   delta: 1000 / 60,
   // });
-  // Runner.run(runner, engine);
+  // Matter.Runner.run(runner, engine);
 
   // START HERE
 
@@ -315,19 +343,28 @@ window.addEventListener('DOMContentLoaded', () => {
       lineWidth: 1
     }
   }, true);
+  const terrainRenderer = new PIXI.Graphics();
+  app.stage.addChild(terrainRenderer);
   terrain.label = "ground";
+  const players = [];
+  const addPlayer = player => {
+    Composite.add(world, player.body);
+    app.stage.addChild(player.renderer);
+    players.push(player);
+  }
   const p1 = createPlayer(v2(50, 50));
-  Composite.add(world, p1);
   const p2 = createPlayer(v2(200, 50));
-  Composite.add(world, p2);
-  const players = [p1, p2];
+  addPlayer(p1);
+  addPlayer(p2);
   let bullets = [];
   const addBullet = bullet => {
-    Composite.add(world, bullet);
+    Composite.add(world, bullet.body);
+    app.stage.addChild(bullet.renderer);
     bullets.push(bullet);
   }
 
   const refreshTerrain = () => {
+    console.log("refreshTerrain");
     Composite.remove(world, terrain);
     terrain = Bodies.fromVertices(0, 0, map.getPath(), {
       isStatic: true,
@@ -340,6 +377,11 @@ window.addEventListener('DOMContentLoaded', () => {
     terrain.label = "ground";
     Matter.Body.setPosition(terrain, v2(-500 + terrain.position.x - terrain.bounds.min.x, 400 + terrain.position.y - terrain.bounds.max.y))
     Composite.add(world, terrain);
+
+    terrainRenderer.clear();
+    terrainRenderer.beginFill(0x666600);
+    terrainRenderer.drawPolygon(...map.getPath().map(path => path.map(p => new PIXI.Point(p.x, p.y))));
+    terrainRenderer.endFill();
   }
 
   const clipUpdate = (positions, radius) => {
@@ -350,28 +392,8 @@ window.addEventListener('DOMContentLoaded', () => {
     refreshTerrain();
   }
 
-  const checkCollide = () => {
-    const collisions = Matter.Query.collides(terrain, bullets);
-    if (!collisions.length) return;
-    console.log(collisions)
-    const clipPositions = collisions.map(collision => {
-      const body = collision.bodyA;
-      return {
-        x: body.position.x - terrain.bounds.min.x - 500,
-        y: body.position.y - terrain.bounds.max.y + 400,
-      }
-    });
-    clipUpdate(clipPositions, 40);
-    const hitBodies = collisions.map(collision => collision.bodyA);
-    hitBodies.forEach(body => Composite.remove(world, body));
-    hitBodies.forEach(body => {
-      console.log(bullets.filter(b => b === body))
-      bullets = bullets.filter(b => b !== body);
-    });
-  }
-
   const damn = (body) => {
-    if (!bullets.includes(body)) return;
+    if (!bullets.find(b => b.body === body)) return;
     Composite.remove(world, body);
     bullets = bullets.filter(b => b !== body);
     return body.position;
@@ -381,7 +403,7 @@ window.addEventListener('DOMContentLoaded', () => {
     y: p.y - terrain.bounds.max.y + 400,
   });
   const hitPlayer = (body, damage) => {
-    const player = getLogic(body);
+    const player = players.find(p => p.body === body);
     console.log("damage", damage, player.getHp());
     player.mapHp(v => v - damage);
     console.log("damage", damage, player.getHp());
@@ -403,7 +425,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }).filter(x => x);
     clipPositions.forEach(pos => {
       const hitbox = circle(pos.x, pos.y, 20);
-      Matter.Query.collides(hitbox, players)
+      Matter.Query.collides(hitbox, players.map(p => p.body))
         .filter(query => query.collided)
         .forEach(query => {
           const { bodyA, bodyB } = query;
@@ -415,26 +437,12 @@ window.addEventListener('DOMContentLoaded', () => {
           }
         });
     });
-    clipUpdate(clipPositions.map(toClipPos), 20);
+    if (clipPositions.length) {
+      clipUpdate(clipPositions.map(toClipPos), 20);
+    }
   });
   refreshTerrain();
 
-  const mouse = Mouse.create(render.canvas);
-  const mouseConstraint = MouseConstraint.create(engine, {
-    mouse,
-    constrain: {
-      stiffness: 0.2,
-    },
-  });
-  Composite.add(world, mouseConstraint);
-  render.mouse = mouse;
-  Matter.Events.on(mouseConstraint, 'mousedown', e => {
-    curTouch = 1;
-    curPos = { ...e.source.mouse.position };
-    curPos.x = curPos.x | 0;
-    curPos.y = curPos.y | 0;
-    console.log("mousedown", curTouch, curPos);
-  });
   const gameLoop = (dt, inputs) => {
     inputs.forEach((input, index) => {
       if (input.touches > 0) {
@@ -450,13 +458,5 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-  Matter.Events.on(engine, 'afterUpdate', e => {
-    Render.lookAt(render, p1, v2(300, 300));
-  });
-
-  // Render.lookAt(render, {
-  //   min: { x: 0, y: 0 },
-  //   max: { x: 400, y: 300 }
-  // });
 });
 
