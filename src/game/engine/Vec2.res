@@ -2,6 +2,7 @@ type t = {
   x: float,
   y: float,
 }
+let make = (x, y) => {x: x, y: y}
 let zero = {
   x: 0.,
   y: 0.,

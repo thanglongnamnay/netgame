@@ -52,11 +52,15 @@ app.post('/find-match', (req, res) => {
   const { name } = req.body;
   let room = findAvailableRoom();
   const { id, maxPlayer } = room;
+  const players = Array(maxPlayer).fill(0).map((_, i) => ({
+    id: i,
+    position: { x: i == 0 ? 50 : 200, y: 50 },
+  }));
   room = Room.addPlayer(room, {
     respond: (index, startTime) => {
       res.json({
         id,
-        maxPlayer,
+        players,
         startTime,
         index,
         name,

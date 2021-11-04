@@ -7,34 +7,11 @@ const { ClientSendT } = require("../flat-models/client-send");
 const converter = require("../converter");
 const constants = require("../constants");
 const PIXI = require('pixi.js');
+const { Input } = require('./input');
 
+const { Engine, Common, Composite, Bodies, Body, Render } = Matter;
 const stringify = v => JSON.stringify(v, null, 2);
-const Engine = Matter.Engine,
-  Render = Matter.Render,
-  Common = Matter.Common,
-  MouseConstraint = Matter.MouseConstraint,
-  Mouse = Matter.Mouse,
-  Composite = Matter.Composite,
-  Body = Matter.Body,
-  Bodies = Matter.Bodies;
 
-function pathToSvg(paths, scale = 1) {
-  var svgpath = "", i, j;
-  for (i = 0; i < paths.length; i++) {
-    for (j = 0; j < paths[i].length; j++) {
-      if (!j) svgpath += "M";
-      else svgpath += "L";
-      svgpath += (paths[i][j].X / scale) + ", " + (paths[i][j].Y / scale);
-    }
-    svgpath += "Z";
-  }
-  if (svgpath == "") svgpath = "M0,0";
-
-  let svg = '<svg id="svg" style="margin-top:10px; margin-right:10px;margin-bottom:10px;background-color:#dddddd" width="800" height="600">';
-  svg += '<path stroke="black" fill="yellow" stroke-width="2" d="' + svgpath + '"/>';
-  svg += '</svg>';
-  document.getElementById("svg").innerHTML = svg;
-}
 const clamp = (a, b, x) => x < a ? a : (x > b ? b : a);
 const v2 = Matter.Vector.create
 const V2 = p => ({ X: p.x, Y: p.y });
@@ -145,7 +122,13 @@ const jump = (player, direction) => {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-
+  const input = Input();
+  window.addEventListener('keydown', function (evt) {
+    input.keydown(Input.toKeyCode(evt));
+  });
+  window.addEventListener('keyup', e => {
+    input.keyup(Input.toKeyCode(e));
+  });
   // provide concave decomposition support library
   Common.setDecomp(require('poly-decomp'));
 
@@ -153,6 +136,16 @@ window.addEventListener('DOMContentLoaded', () => {
   const engine = Engine.create(),
     world = engine.world;
 
+  const render = Render.create({
+    element: document.body,
+    engine: engine,
+    options: {
+      wireframes: 1,
+      width: 800,
+      height: 600,
+    }
+  });
+  Render.run(render);
 
   const width = 800;
   const height = 600;
@@ -166,11 +159,7 @@ window.addEventListener('DOMContentLoaded', () => {
   document.body.appendChild(app.view);
 
   app.renderer.plugins.interaction.on('pointerup', e => {
-    curTouch = 1;
-    curPos = e.data.getLocalPosition(terrainRenderer);
-    curPos.x = curPos.x | 0;
-    curPos.y = curPos.y | 0;
-    console.log("mousedown", curTouch, curPos);
+    input.touchdown(e.data.getLocalPosition(terrainRenderer));
   });
   app.ticker.add(() => {
     const updatePosition = object => {
@@ -192,43 +181,8 @@ window.addEventListener('DOMContentLoaded', () => {
   // START HERE
 
   const playerCount = 2;
-  let curTouch = 0;
-  let curPos = { x: 0, y: 0 };
-  const currentKeys = new Set();
-  const toKeyCode = e => {
-    switch (e.code) {
-      case "KeyS":
-      case "ArrowDown":
-        return 's'.charCodeAt(0);
-      case "KeyW":
-      case "ArrowUp":
-        return 'w'.charCodeAt(0);
-      case "KeyA":
-      case "ArrowLeft":
-        return 'a'.charCodeAt(0);
-      case "KeyD":
-      case "ArrowRight":
-        return 'd'.charCodeAt(0);
-    }
-  }
-  window.addEventListener('keydown', function (evt) {
-    console.log("onkeydown", evt.code);
-    currentKeys.add(toKeyCode(evt));
-  });
-  window.addEventListener('keyup', e => {
-    console.log("onkeyup", e.code);
-    currentKeys.delete(toKeyCode(e));
-  });
-  const getCurrentInput = () => {
-    const keys = Array.from(currentKeys.values());
-    return {
-      touches: curTouch,
-      touchPos: curTouch ? curPos : { x: 0, y: 0 },
-      keys,
-    }
-  }
   const log = console.log
-  const dt = 1000 / 30;
+
   let t;
   const client = socket.create((receiveObj) => {
     const receiveData = {
@@ -239,14 +193,10 @@ window.addEventListener('DOMContentLoaded', () => {
     // log("receive", stringify(receiveData));
   });
   const step = () => {
-    t = ClientData.step(t, ClientData.addFrame(getCurrentInput()));
-    if (curTouch > 0) {
-      console.log("add shoot at frame", frameCount, stepCount);
-    }
-    curTouch = 0; // reset inputs
-    currentKeys.clear();
+    t = ClientData.step(t, ClientData.addFrame(input.getCurrentInput()));
+    input.reset();
     const payloads = ClientData.getFirstFrames(t); // could throw here
-    gameLoop(dt, payloads);
+    gameLoop(payloads);
     t = ClientData.step(t, ClientData.consume);
   }
   let started = false;
@@ -254,6 +204,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (started) return;
     started = true;
     log('start', myIndex);
+
     t = ClientData.nope(myIndex, playerCount);
     const dtEngine = 16;
     (function run() {
@@ -335,13 +286,8 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   const map = createMap("asdklfjas");
-  let terrain = Bodies.fromVertices(0, 400, map.getPath(), {
+  let terrain = Bodies.fromVertices(0, 0, map.getPath(), {
     isStatic: true,
-    render: {
-      fillStyle: '#ffffff',
-      strokeStyle: '#060a19',
-      lineWidth: 1
-    }
   }, true);
   const terrainRenderer = new PIXI.Graphics();
   app.stage.addChild(terrainRenderer);
@@ -366,16 +312,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const refreshTerrain = () => {
     console.log("refreshTerrain");
     Composite.remove(world, terrain);
-    terrain = Bodies.fromVertices(0, 0, map.getPath(), {
-      isStatic: true,
-      render: {
-        fillStyle: '#ffffff',
-        strokeStyle: '#060a19',
-        lineWidth: 0
-      }
-    }, true);
+    terrain = Bodies.fromVertices(0, 0, map.getPath(), { isStatic: true, }, true);
     terrain.label = "ground";
-    Matter.Body.setPosition(terrain, v2(-500 + terrain.position.x - terrain.bounds.min.x, 400 + terrain.position.y - terrain.bounds.max.y))
+    Matter.Body.setPosition(terrain, v2(-500 - terrain.bounds.min.x, 400 - terrain.bounds.max.y))
     Composite.add(world, terrain);
 
     terrainRenderer.clear();
@@ -443,7 +382,7 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   refreshTerrain();
 
-  const gameLoop = (dt, inputs) => {
+  const gameLoop = (inputs) => {
     inputs.forEach((input, index) => {
       if (input.touches > 0) {
         console.log("input > 0", input);

@@ -2,6 +2,13 @@
 'use strict';
 
 
+function make(x, y) {
+  return {
+          x: x,
+          y: y
+        };
+}
+
 var zero = {
   x: 0,
   y: 0
@@ -72,6 +79,7 @@ function dot(a, b) {
   return a.x * b.x + a.y * b.y;
 }
 
+exports.make = make;
 exports.zero = zero;
 exports.create = create;
 exports.plus = plus;
