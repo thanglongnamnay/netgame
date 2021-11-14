@@ -25,6 +25,7 @@ const create = (cb: (receiveObj: ServerSendT) => void) => {
 }
 const fbb = new flatbuffers.Builder(1);
 const send = (client: dgram.Socket, index: number, sendObj: ClientSendT) => {
+  console.log("sending", index);
   fbb.clear();
   fbb.finish(sendObj.pack(fbb))
   const id = Buffer.allocUnsafe(4);

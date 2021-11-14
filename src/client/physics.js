@@ -41,8 +41,8 @@ const createMap = (seed) => {
   };
 }
 
-const Physics = (dt) => {
-  const map = createMap("asdklfjas");
+const Physics = (seed, dt) => {
+  const map = createMap(seed);
   const engine = Engine.create();
   const world = engine.world;
   Common.setDecomp(require('poly-decomp'));
@@ -108,14 +108,10 @@ const Physics = (dt) => {
     return addBullet(bulletId, shootPos, velocity);
   }
   const jump = (playerId, direction) => {
-    const strength = 5;
     const player = bodies.players.find(p => p.playerId === playerId);
     if (!player) return console.warn("Player dead", playerId);
-    if (direction) {
-      Body.setVelocity(player, v2(strength, -strength));
-    } else {
-      Body.setVelocity(player, v2(-strength, -strength));
-    }
+    console.log("Physic.jump", direction);
+    Body.setVelocity(player, direction);
   }
 
   const refreshTerrain = () => {
@@ -148,8 +144,17 @@ const Physics = (dt) => {
   //     Composite.remove(world, bodies.players.find(p => p.playerId === id));
   //   }
   // }
-  const hitPlayer = (bid, pid) => {
-    Matter.Events.trigger(physic, 'hit-player', { bid, pid })
+  const hitPlayer = (bullet, player) => {
+    const distance = Matter.Vector.sub(player.position, bullet.position);
+    const force = {
+      x: 30 / distance.x,
+      y: 30 / distance.y,
+    };
+    Body.setVelocity(player, force);
+    Matter.Events.trigger(physic, 'hit-player', {
+      bid: bullet.bulletId,
+      pid: player.playerId,
+    })
   }
   Matter.Events.on(engine, "collisionStart", e => {
     const { pairs } = e;
@@ -165,10 +170,9 @@ const Physics = (dt) => {
         .filter(query => query.collided)
         .forEach(query => {
           const { bodyA, bodyB } = query;
-          const bid = bullet.bulletId;
           console.log("collides", bodyA, bodyB, query);
-          if (bodyA.label === "player") return hitPlayer(bid, bodyA.playerId);
-          if (bodyB.label === "player") return hitPlayer(bid, bodyB.playerId);
+          if (bodyA.label === "player") return hitPlayer(bullet, bodyA);
+          if (bodyB.label === "player") return hitPlayer(bullet, bodyB);
         });
       removeBullet(bullet.bulletId);
     });

@@ -10,6 +10,7 @@ type t = {
 @deriving(accessors)
 type action =
   | Start
+  | Tick
   | AddPlayers(array<Player.t>)
   | RemovePlayer(Player.id)
   | AddBullet(Bullet.t)
@@ -25,6 +26,7 @@ let make = () => {
 let rec step = (t, action) =>
   switch action {
   | Start => {...t, state: Playing}
+  | Tick => {...t, players: t.players->Belt.Array.map(Player.step(_, Tick))}
   | AddPlayers(players) => {...t, players: t.players->Belt.Array.concat(players)}
   | RemovePlayer(id) => {...t, players: t.players->Belt.Array.keep(p => p.id != id)}
   | AddBullet(bullet) => {...t, bullets: t.bullets->Belt.List.add(bullet)}

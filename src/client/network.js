@@ -1,10 +1,10 @@
 const Socket = require("./socket");
-const ClientData = require("../common/ClientData.bs");
+const ClientData = require("../data-frame/ClientData.bs");
 const { ClientSendT } = require("../flat-models/client-send");
 const converter = require("../converter");
-const constants = require("../constants");
 
 const log = console.log;
+const stringify = v => JSON.stringify(v, null, 2);
 const Network = (input, gameLoop, roomId, myIndex, playerCount) => {
   let t = ClientData.nope(myIndex, playerCount);
   const client = Socket.create((receiveObj) => {
@@ -33,7 +33,7 @@ const Network = (input, gameLoop, roomId, myIndex, playerCount) => {
       Socket.send(client, roomId, sendObj);
       // log("send", stringify(sendObj));
     } catch (e) {
-      log(stringify(e), 'its ok');
+      log(e, 'its ok');
     }
   }
   const bufferSize = () => Math.min(...(t.playersFrames.map(f => f.payloads.length)));

@@ -1,11 +1,13 @@
 type player
 type t = {
   id: int,
+  seed: string,
   maxPlayer: int,
   players: array<player>,
 }
-let make = (id, maxPlayer) => {
+let make = (id, seed, maxPlayer) => {
   id: id,
+  seed: seed,
   maxPlayer: maxPlayer,
   players: [],
 }

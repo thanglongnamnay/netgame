@@ -16,7 +16,7 @@
     "prettify": "swc src -d out -w",
     "run": "node-dev src/main.bs.js --notify=false",
     "commit": "git add . && git commit -m \"$(curl -s http://whatthecommit.com/index.txt)\" && git push",
-    "test": "node src/common/TestAll.bs.js"
+    "test": "node src/data-frame/TestAll.bs.js"
   },
   "repository": {
     "type": "git",
@@ -34,6 +34,7 @@
     "express": "^4.17.1",
     "fast-glob": "^3.2.7",
     "flatbuffers": "^2.0.3",
+    "howler": "^2.2.3",
     "matter-js": "^0.17.1",
     "pixi.js": "^6.1.3",
     "poly-decomp": "^0.3.0",

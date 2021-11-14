@@ -22,6 +22,7 @@ var create = function (cb) {
 exports.create = create;
 var fbb = new flatbuffers.Builder(1);
 var send = function (client, index, sendObj) {
+    console.log("sending", index);
     fbb.clear();
     fbb.finish(sendObj.pack(fbb));
     var id = Buffer.allocUnsafe(4);

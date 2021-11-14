@@ -1,8 +1,8 @@
 const fPos = require('./flat-models/pos');
 const fPayload = require('./flat-models/payload');
-const rPayload = require('./common/Payload.bs');
+const rPayload = require('./data-frame/Payload.bs');
 const fFrames = require('./flat-models/frames');
-const rFrames = require('./common/Frames.bs');
+const rFrames = require('./data-frame/Frames.bs');
 
 const pos = t => new fPos.PosT(
   t.x,

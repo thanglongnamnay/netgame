@@ -2,32 +2,86 @@
 'use strict';
 
 var Curry = require("@rescript/std/lib/js/curry.js");
+var Action$Netgame = require("./Action.bs.js");
 
 function mapHp(param_0) {
-  return /* MapHp */{
+  return {
+          TAG: /* MapHp */0,
           _0: param_0
         };
 }
 
-function make(id, hp) {
+function shoot(param_0, param_1) {
+  return {
+          TAG: /* Shoot */1,
+          _0: param_0,
+          _1: param_1
+        };
+}
+
+function jump(param_0, param_1) {
+  return {
+          TAG: /* Jump */2,
+          _0: param_0,
+          _1: param_1
+        };
+}
+
+function make(id, hp, action) {
   return {
           id: id,
-          hp: hp
+          hp: hp,
+          action: action
         };
 }
 
 function step(t, action) {
-  return {
-          id: t.id,
-          hp: Curry._1(action._0, t.hp)
-        };
+  if (typeof action === "number") {
+    return {
+            id: t.id,
+            hp: t.hp,
+            action: Action$Netgame.clear(t.action)
+          };
+  }
+  switch (action.TAG | 0) {
+    case /* MapHp */0 :
+        return {
+                id: t.id,
+                hp: Curry._1(action._0, t.hp),
+                action: t.action
+              };
+    case /* Shoot */1 :
+        return {
+                id: t.id,
+                hp: t.hp,
+                action: Action$Netgame.step(t.action, {
+                      TAG: /* Shoot */0,
+                      _0: action._0
+                    }, action._1)
+              };
+    case /* Jump */2 :
+        return {
+                id: t.id,
+                hp: t.hp,
+                action: Action$Netgame.step(t.action, {
+                      TAG: /* Jump */1,
+                      _0: action._0
+                    }, action._1)
+              };
+    
+  }
 }
 
 function isAlive(t) {
   return t.hp > 0;
 }
 
+var tick = /* Tick */0;
+
 exports.mapHp = mapHp;
+exports.shoot = shoot;
+exports.jump = jump;
+exports.tick = tick;
 exports.make = make;
 exports.step = step;
 exports.isAlive = isAlive;

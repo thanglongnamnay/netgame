@@ -1,4 +1,4 @@
-const { RealWormClient } = require('./game');
+const { startStreaming } = require('./game');
 const constants = require("../constants");
 
 async function postData(url = '', data = {}) {
@@ -19,21 +19,12 @@ async function postData(url = '', data = {}) {
   return response.json(); // parses JSON response into native JavaScript objects
 }
 window.addEventListener('DOMContentLoaded', function () {
-  const game = RealWormClient();
-
   document.getElementById('find-match').onclick = async (e) => {
     postData(`http://${constants.host}:8080/find-match`, {
       name: document.getElementById('name').value,
     }).then(info => {
       console.log("fetched", info);
-      const {
-        id,
-        players,
-        startTime,
-        index,
-        name,
-      } = info;
-      game.startStreaming(id, index, startTime, players);
+      startStreaming(info);
     });
   }
 });

@@ -5,8 +5,8 @@ var Dgram = require("dgram");
 var Belt_Array = require("@rescript/std/lib/js/belt_Array.js");
 var Belt_HashMapInt = require("@rescript/std/lib/js/belt_HashMapInt.js");
 var Rebuffers$Netgame = require("../lib/Rebuffers.bs.js");
-var ClientData$Netgame = require("../common/ClientData.bs.js");
-var ServerRoom$Netgame = require("../common/ServerRoom.bs.js");
+var ClientData$Netgame = require("../data-frame/ClientData.bs.js");
+var ServerRoom$Netgame = require("../data-frame/ServerRoom.bs.js");
 
 var server = Dgram.createSocket("udp4");
 

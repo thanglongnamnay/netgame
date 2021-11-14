@@ -4,11 +4,10 @@ const flatbuffers = require("flatbuffers");
 const dgram = require("dgram");
 const { ClientSend } = require("../flat-models/client-send");
 const { ServerSendT } = require("../flat-models/server-send");
-const ServerRoom = require("../common/ServerRoom.bs");
+const ServerRoom = require("../data-frame/ServerRoom.bs");
 const converter = require("../converter");
 const server = dgram.createSocket('udp4');
 const constants = require("../constants");
-
 
 const PLAYER_COUNT = 2;
 const send = function (rinfo, sendObj) {
@@ -25,7 +24,7 @@ server.on('listening', function () {
     console.log("server listening " + address.address + ":" + address.port);
 });
 server.on('message', function (msg, rinfo) {
-    // console.log("msg from", rinfo, msg.readInt32LE(0));
+    // console.log('server got message', rinfo);
     rooms.filter(r => r.id === msg.readInt32LE(0)).forEach(room => room.onMessage(msg.slice(4), rinfo));
 });
 server.bind(8081);
@@ -64,7 +63,7 @@ const makeRoom = (id) => {
                 myFrames: converter.rframes(clientSendObj.myFrames),
                 otherAcks: clientSendObj.otherAcks,
             }
-            // console.log("server got from " + rinfo.address + ":" + rinfo.port, clientSendObj.myIndex);
+            console.log("server got from " + rinfo.address + ":" + rinfo.port, clientSendObj.myIndex);
 
             t = ServerRoom.step(t, ServerRoom.receive(clientSent));
         }
@@ -79,9 +78,6 @@ let rooms = [];
 const addRoom = id => {
     const room = makeRoom(id)
     rooms.push(room);
-    setTimeout(() => {
-        destroyRoom(room);
-    }, 30000);
 }
 process.on('message', msg => {
     console.log("child got", msg);

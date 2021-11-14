@@ -3,9 +3,10 @@
 
 var Belt_Array = require("@rescript/std/lib/js/belt_Array.js");
 
-function make(id, maxPlayer) {
+function make(id, seed, maxPlayer) {
   return {
           id: id,
+          seed: seed,
           maxPlayer: maxPlayer,
           players: []
         };
@@ -18,6 +19,7 @@ function isFull(t) {
 function addPlayer(t, player) {
   return {
           id: t.id,
+          seed: t.seed,
           maxPlayer: t.maxPlayer,
           players: Belt_Array.concat(t.players, [player])
         };

@@ -84,14 +84,14 @@ const Renderer = (app, physics) => {
   }
   const borderMatrix = PIXI.Matrix.IDENTITY
     .translate(-300, -400)
-    .scale(1.005, 1.005)
+    .scale(1.015, 1.015)
     .translate(300, 400);
   const refreshTerrain = (map = physics.getMap()) => {
     console.log("renderer.refreshTerrain", map);
     const terrainRenderer = objects.terrain;
     terrainRenderer.clear();
     terrainRenderer.beginTextureFill({
-      texture: PIXI.Texture.from('resource/background.jpg'),
+      texture: PIXI.Texture.from('resource/background.jpeg'),
       // color: 0xaaaa00,
     });
     map.getPath().forEach(path => terrainRenderer.drawPolygon(path));
@@ -100,7 +100,7 @@ const Renderer = (app, physics) => {
     terrainBorder.clear();
     terrainBorder.beginTextureFill({
       texture: PIXI.Texture.WHITE,
-      color: 0x000000,
+      color: 0x0055ff,
       alpha: 0.4,
     });
     map.getPath().map(path => path.map(p => borderMatrix.apply(p)))

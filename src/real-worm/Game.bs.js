@@ -61,11 +61,21 @@ function make(param) {
 
 function step(t, action) {
   if (typeof action === "number") {
-    return {
-            state: /* Playing */1,
-            players: t.players,
-            bullets: t.bullets
-          };
+    if (action === /* Start */0) {
+      return {
+              state: /* Playing */1,
+              players: t.players,
+              bullets: t.bullets
+            };
+    } else {
+      return {
+              state: t.state,
+              players: Belt_Array.map(t.players, (function (__x) {
+                      return Player$Netgame.step(__x, /* Tick */0);
+                    })),
+              bullets: t.bullets
+            };
+    }
   }
   switch (action.TAG | 0) {
     case /* AddPlayers */0 :
@@ -124,7 +134,8 @@ function step(t, action) {
                         }), {
                       TAG: /* PlayerAction */4,
                       _0: action._1,
-                      _1: /* MapHp */{
+                      _1: {
+                        TAG: /* MapHp */0,
                         _0: (function (hp) {
                             return hp - bullet.damage | 0;
                           })
@@ -170,7 +181,10 @@ var Helper = {
 
 var start = /* Start */0;
 
+var tick = /* Tick */1;
+
 exports.start = start;
+exports.tick = tick;
 exports.addPlayers = addPlayers;
 exports.removePlayer = removePlayer;
 exports.addBullet = addBullet;
