@@ -75,4 +75,5 @@ $codeFrame
     Js.log2(j`\u001b[36mPassed:`, j`\u001b[39m$content`)
   }
 }
-let equal: type a. (a, a) => bool = (a, b) => a == b
+let equal = (a, b) => a == b
+let sameType = (_: 'a, _: 'a) => ()

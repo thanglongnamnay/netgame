@@ -44,10 +44,14 @@ var receiveData = {
   players: receiveData_players
 };
 
+Tests$Netgame.sameType(ClientRoom$Netgame.packSend(sendData), Buffer.alloc(0));
+
+Tests$Netgame.sameType(ClientRoom$Netgame.packReceive(receiveData), Buffer.alloc(0));
+
 Tests$Netgame.run([
       [
         "TestClientData.res",
-        20,
+        25,
         13,
         85
       ],
@@ -57,7 +61,7 @@ Tests$Netgame.run([
 Tests$Netgame.run([
       [
         "TestClientData.res",
-        27,
+        32,
         13,
         70
       ],
@@ -67,7 +71,7 @@ Tests$Netgame.run([
 Tests$Netgame.run([
       [
         "TestClientData.res",
-        34,
+        39,
         13,
         73
       ],

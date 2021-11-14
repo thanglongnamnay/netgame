@@ -68,8 +68,13 @@ function run(loc, left, comparator, right) {
 
 var equal = Caml_obj.caml_equal;
 
+function sameType(param, param$1) {
+  
+}
+
 exports.dirname = dirname$1;
 exports.cleanUpStackTrace = cleanUpStackTrace;
 exports.run = run;
 exports.equal = equal;
+exports.sameType = sameType;
 /* dirname Not a pure module */

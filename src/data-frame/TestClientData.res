@@ -16,6 +16,11 @@ let receiveData: ClientRoom.receiveData = {
   serverAck: 20, // dont send anything older than this
   players: Belt.Array.make(5, Frames.nope()),
 }
+
+// pack data should return buffer
+sendData->ClientRoom.packSend->Tests.sameType(NodeJs.Buffer.alloc(0))
+receiveData->ClientRoom.packReceive->Tests.sameType(NodeJs.Buffer.alloc(0))
+
 Tests.run(
   __POS_OF__("serialize and deserialize receiveData should be the same as do nothing"),
   receiveData->ClientRoom.serializeReceive->ClientRoom.deserializeReceive,
