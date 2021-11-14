@@ -23,33 +23,16 @@ Tests.run(
   receiveData,
 )
 
-let sendSchemad = sendData->ClientRoom.serializeSend
-Js.log2("send schema", sendSchemad)
-
-let testSchema = Rebuffers.Schema([
-  Int(1),
-  Bool(true),
-  Array(Rebuffers.toList([1, 2, 3], i => Int(i))),
-])
-
 Tests.run(
-  __POS_OF__("pack and read send should be the same as do nothing"),
-  sendData
-  ->ClientRoom.serializeSend
-  ->Rebuffers.pack
-  ->Rebuffers.read(ClientRoom.sendSchema)
-  ->ClientRoom.deserializeSend,
+  __POS_OF__("pack and read sendData should be the same as do nothing"),
+  sendData->ClientRoom.packSend->ClientRoom.readSend,
   Tests.equal,
   sendData,
 )
 
 Tests.run(
-  __POS_OF__("pack and reac receiveData should be the same as do nothing"),
-  receiveData
-  ->ClientRoom.serializeReceive
-  ->Rebuffers.pack
-  ->Rebuffers.read(ClientRoom.receiveSchema)
-  ->ClientRoom.deserializeReceive,
+  __POS_OF__("pack and read receiveData should be the same as do nothing"),
+  receiveData->ClientRoom.packReceive->ClientRoom.readReceive,
   Tests.equal,
   receiveData,
 )
