@@ -63,7 +63,7 @@ const makeRoom = (id) => {
                 myFrames: converter.rframes(clientSendObj.myFrames),
                 otherAcks: clientSendObj.otherAcks,
             }
-            console.log("server got from " + rinfo.address + ":" + rinfo.port, clientSendObj.myIndex);
+            // console.log("server got from " + rinfo.address + ":" + rinfo.port, clientSendObj.myIndex);
 
             t = ServerRoom.step(t, ServerRoom.receive(clientSent));
         }

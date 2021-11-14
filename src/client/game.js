@@ -9,7 +9,13 @@ const PIXI = require('pixi.js');
 const Matter = require('matter-js');
 const { loadSound } = require('./sound');
 
+const width = 800;
+const height = 600;
 const log = console.log;
+const jumpStrength = 5;
+const jumpLeft = { x: -jumpStrength, y: -jumpStrength };
+const jumpRight = { x: jumpStrength, y: -jumpStrength };
+const dtEngine = 16;
 const Sound = loadSound();
 const input = Input();
 window.addEventListener('keydown', function (evt) {
@@ -24,9 +30,6 @@ const startStreaming = ({ id, seed, index, startTime, players }) => {
   const roomId = id;
   const myIndex = index;
   started = true;
-
-  const width = 800;
-  const height = 600;
 
   const app = new PIXI.Application({
     width,
@@ -51,9 +54,6 @@ const startStreaming = ({ id, seed, index, startTime, players }) => {
     renderer.removeBullet(bid);
     Sound.explode();
   }
-  const jumpStrength = 5;
-  const jumpLeft = { x: -jumpStrength, y: -jumpStrength };
-  const jumpRight = { x: jumpStrength, y: -jumpStrength };
   let gameTick = 0;
   const gameLoop = (inputs) => {
     inputs.forEach((input, index) => {
@@ -81,7 +81,6 @@ const startStreaming = ({ id, seed, index, startTime, players }) => {
   }
 
   let bulletId = 0;
-  const dtEngine = 16;
   const logic = Logic();
   const physics = Physics(seed, dtEngine);
   const renderer = Renderer(app, physics);
