@@ -163,19 +163,19 @@ function getSendData(t) {
         };
 }
 
-function packSendData(sendData) {
+function packSend(sendData) {
   return Rebuffers$Netgame.pack(serializeSend(sendData));
 }
 
-function packReceiveData(receiveData) {
+function packReceive(receiveData) {
   return Rebuffers$Netgame.pack(serializeReceive(receiveData));
 }
 
-function readSendData(buffer) {
+function readSend(buffer) {
   return deserializeSend(Rebuffers$Netgame.read(buffer, sendSchema));
 }
 
-function readReceiveData(buffer) {
+function readReceive(buffer) {
   return deserializeReceive(Rebuffers$Netgame.read(buffer, receiveSchema));
 }
 
@@ -234,10 +234,10 @@ exports.addFrame = addFrame;
 exports.nope = nope;
 exports.getFirstFrames = getFirstFrames;
 exports.getSendData = getSendData;
-exports.packSendData = packSendData;
-exports.packReceiveData = packReceiveData;
-exports.readSendData = readSendData;
-exports.readReceiveData = readReceiveData;
+exports.packSend = packSend;
+exports.packReceive = packReceive;
+exports.readSend = readSend;
+exports.readReceive = readReceive;
 exports.getSendDataRaw = getSendDataRaw;
 exports.step = step;
 /* sendSchema Not a pure module */

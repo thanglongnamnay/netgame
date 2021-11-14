@@ -42,7 +42,7 @@ function getSendData(t) {
 }
 
 function getSendDataRaw(t) {
-  return Belt_Array.map(getSendData(t), ClientRoom$Netgame.packReceiveData);
+  return Belt_Array.map(getSendData(t), ClientRoom$Netgame.packReceive);
 }
 
 function step(t, action) {

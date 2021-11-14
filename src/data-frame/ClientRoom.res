@@ -70,11 +70,11 @@ let getSendData = (t: t) => {
   myFrames: t.playersFrames->Belt.Array.getExn(t.myIndex),
   otherAcks: t.playersFrames->Belt.Array.map(frames => frames.end),
 }
-let packSendData = sendData => sendData->serializeSend->Rebuffers.pack
-let packReceiveData = receiveData => receiveData->serializeReceive->Rebuffers.pack
-let readSendData = buffer => buffer->Rebuffers.read(sendSchema)->deserializeSend
-let readReceiveData = buffer => buffer->Rebuffers.read(receiveSchema)->deserializeReceive
-let getSendDataRaw = (t: t) => t->getSendData->packSendData
+let packSend = sendData => sendData->serializeSend->Rebuffers.pack
+let packReceive = receiveData => receiveData->serializeReceive->Rebuffers.pack
+let readSend = buffer => buffer->Rebuffers.read(sendSchema)->deserializeSend
+let readReceive = buffer => buffer->Rebuffers.read(receiveSchema)->deserializeReceive
+let getSendDataRaw = (t: t) => t->getSendData->packSend
 
 let step = (t: t, action) =>
   switch action {

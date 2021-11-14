@@ -6,7 +6,7 @@ const stringify = v => JSON.stringify(v, null, 2);
 const Network = (input, gameLoop, roomId, myIndex, playerCount) => {
   let t = ClientData.nope(myIndex, playerCount);
   const client = Socket.create(buffer => {
-    const receiveData = ClientData.readReceiveData(buffer);
+    const receiveData = ClientData.readReceive(buffer);
     t = ClientData.step(t, ClientData.receive(receiveData));
     // log("receive", stringify(receiveData));
   });

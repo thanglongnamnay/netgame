@@ -30,7 +30,7 @@ let getSendData = t =>
     ),
   })
 
-let getSendDataRaw = t => t->getSendData->Belt.Array.map(ClientRoom.packReceiveData)
+let getSendDataRaw = t => t->getSendData->Belt.Array.map(ClientRoom.packReceive)
 
 let step = (t, action) =>
   switch action {

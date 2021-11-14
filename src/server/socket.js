@@ -67,7 +67,7 @@ const makeRoom = (info) => {
         id,
         destroy,
         onMessage(msg, rinfo) {
-            const clientSent = ClientData.readSendData(msg);
+            const clientSent = ClientData.readSend(msg);
             if (!rinfoMap[clientSent.myIndex]) rinfoMap[clientSent.myIndex] = rinfo;
             // console.log("server got from " + rinfo.address + ":" + rinfo.port, clientSent.myIndex);
             t = ServerRoom.step(t, ServerRoom.receive(clientSent));
