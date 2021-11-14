@@ -3,6 +3,7 @@
 
 var Caml_obj = require("@rescript/std/lib/js/caml_obj.js");
 var Belt_Array = require("@rescript/std/lib/js/belt_Array.js");
+var Belt_Option = require("@rescript/std/lib/js/belt_Option.js");
 var Array$Netgame = require("../lib/Array.bs.js");
 var Frames$Netgame = require("./Frames.bs.js");
 
@@ -56,8 +57,15 @@ function step(t, action) {
         };
 }
 
+function getFirstFrames(t) {
+  return Belt_Array.map(Belt_Array.map(Belt_Array.map(t.players, (function (p) {
+                        return p.frames;
+                      })), Frames$Netgame.getFirstFrame), Belt_Option.getExn);
+}
+
 exports.receive = receive;
 exports.nope = nope;
 exports.getSendData = getSendData;
 exports.step = step;
+exports.getFirstFrames = getFirstFrames;
 /* No side effect */

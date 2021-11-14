@@ -47,3 +47,9 @@ let receivePlayerData = (playerReceiveData: PlayerData.t) => {
     }
   }
 }
+let getFirstFrames = t =>
+  t
+  ->Belt.HashMap.Int.valuesToArray
+  ->Belt.Array.map(p => p.PlayerData.frames)
+  ->Belt.Array.map(Frames.getFirstFrame)
+  ->Belt.Array.map(Belt.Option.getExn)

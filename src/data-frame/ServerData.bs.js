@@ -2,6 +2,8 @@
 'use strict';
 
 var Belt_Array = require("@rescript/std/lib/js/belt_Array.js");
+var Belt_Option = require("@rescript/std/lib/js/belt_Option.js");
+var Frames$Netgame = require("./Frames.bs.js");
 var Socket$Netgame = require("./Socket.bs.js");
 var Belt_HashMapInt = require("@rescript/std/lib/js/belt_HashMapInt.js");
 var ImmuArray$Netgame = require("../lib/ImmuArray.bs.js");
@@ -70,10 +72,17 @@ function receivePlayerData(playerReceiveData) {
   return Belt_HashMapInt.set(serverData, playerData$1.id, playerData$1);
 }
 
+function getFirstFrames(t) {
+  return Belt_Array.map(Belt_Array.map(Belt_Array.map(Belt_HashMapInt.valuesToArray(t), (function (p) {
+                        return p.frames;
+                      })), Frames$Netgame.getFirstFrame), Belt_Option.getExn);
+}
+
 exports.serverData = serverData;
 exports.getPlayer = getPlayer;
 exports.addPlayer = addPlayer;
 exports.removePlayer = removePlayer;
 exports.discardAcked = discardAcked;
 exports.receivePlayerData = receivePlayerData;
+exports.getFirstFrames = getFirstFrames;
 /* serverData Not a pure module */

@@ -40,3 +40,9 @@ let step = (t, action) =>
       }),
     }
   }
+
+let getFirstFrames = t =>
+  t.players
+  ->Belt.Array.map(p => p.frames)
+  ->Belt.Array.map(Frames.getFirstFrame)
+  ->Belt.Array.map(Belt.Option.getExn)
