@@ -1,6 +1,6 @@
 const { Input } = require('./input');
-const { Logic } = require('./logic');
-const { Physics } = require('./physics');
+const { Logic } = require('../common/logic');
+const { Physics } = require('../common/physics');
 const { Renderer } = require('./renderer');
 const { Network } = require('./network');
 const Game = require('../real-worm/Game.bs');

@@ -1,4 +1,3 @@
-const Game = require('../real-worm/Game.bs');
 const Merlin1d = require('./Merlin1d');
 const ClipperLib = require('./clipper.js');
 const Matter = require('matter-js');
