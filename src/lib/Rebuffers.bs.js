@@ -94,7 +94,7 @@ function size(data) {
     case /* Array */5 :
         return Belt_Array.reduce(data._0, 0, (function (a, v) {
                       return a + size(v) | 0;
-                    })) + 1 | 0;
+                    })) + 4 | 0;
     case /* Schema */6 :
         return Belt_Array.reduce(data._0, 0, (function (a, v) {
                       return a + size(v) | 0;
@@ -121,7 +121,7 @@ function packData(buffer, _offsetOpt, _data) {
           return buffer.writeFloatLE(data._0, offset);
       case /* Array */5 :
           var t = data._0;
-          var offset$1 = buffer.writeInt8(t.length, offset);
+          var offset$1 = buffer.writeInt32LE(t.length, offset);
           _data = {
             TAG: /* Schema */6,
             _0: t
@@ -217,9 +217,9 @@ function readData(buffer, offsetOpt, schema) {
     }
   } else {
     if (schema.TAG === /* Array */0) {
-      var match = readData(buffer, offset, /* Byte */1);
+      var match = readData(buffer, offset, /* Int */3);
       var length = match.data;
-      if (length.TAG === /* Byte */1) {
+      if (length.TAG === /* Int */3) {
         var match$1 = Belt_Array.reduce(Belt_Array.make(length._0, schema._0), [
               [],
               match.offset

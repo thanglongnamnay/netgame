@@ -6,7 +6,8 @@ var Tests$Netgame = require("../lib/Tests.bs.js");
 var Frames$Netgame = require("./Frames.bs.js");
 var Payload$Netgame = require("./Payload.bs.js");
 var ImmuArray$Netgame = require("../lib/ImmuArray.bs.js");
-var ClientData$Netgame = require("./ClientData.bs.js");
+var Rebuffers$Netgame = require("../lib/Rebuffers.bs.js");
+var ClientRoom$Netgame = require("./ClientRoom.bs.js");
 
 var sendData_myFrames = {
   end: 3,
@@ -35,7 +36,7 @@ Tests$Netgame.run([
         82
       ],
       "serialize and deserialize sendData should be the same as do nothing"
-    ], ClientData$Netgame.deserializeSend(ClientData$Netgame.serializeSend(sendData)), Tests$Netgame.equal, sendData);
+    ], ClientRoom$Netgame.deserializeSend(ClientRoom$Netgame.serializeSend(sendData)), Tests$Netgame.equal, sendData);
 
 var receiveData_players = Belt_Array.make(5, Frames$Netgame.nope(undefined));
 
@@ -52,8 +53,61 @@ Tests$Netgame.run([
         85
       ],
       "serialize and deserialize receiveData should be the same as do nothing"
-    ], ClientData$Netgame.deserializeReceive(ClientData$Netgame.serializeReceive(receiveData)), Tests$Netgame.equal, receiveData);
+    ], ClientRoom$Netgame.deserializeReceive(ClientRoom$Netgame.serializeReceive(receiveData)), Tests$Netgame.equal, receiveData);
+
+var sendSchemad = ClientRoom$Netgame.serializeSend(sendData);
+
+console.log("send schema", sendSchemad);
+
+var testSchema = {
+  TAG: /* Schema */6,
+  _0: [
+    {
+      TAG: /* Int */3,
+      _0: 1
+    },
+    {
+      TAG: /* Bool */0,
+      _0: true
+    },
+    {
+      TAG: /* Array */5,
+      _0: Rebuffers$Netgame.toList([
+            1,
+            2,
+            3
+          ], (function (i) {
+              return {
+                      TAG: /* Int */3,
+                      _0: i
+                    };
+            }))
+    }
+  ]
+};
+
+Tests$Netgame.run([
+      [
+        "TestClientData.res",
+        36,
+        13,
+        66
+      ],
+      "pack and read send should be the same as do nothing"
+    ], ClientRoom$Netgame.deserializeSend(Rebuffers$Netgame.read(Rebuffers$Netgame.pack(ClientRoom$Netgame.serializeSend(sendData)), ClientRoom$Netgame.sendSchema)), Tests$Netgame.equal, sendData);
+
+Tests$Netgame.run([
+      [
+        "TestClientData.res",
+        47,
+        13,
+        73
+      ],
+      "pack and reac receiveData should be the same as do nothing"
+    ], ClientRoom$Netgame.deserializeReceive(Rebuffers$Netgame.read(Rebuffers$Netgame.pack(ClientRoom$Netgame.serializeReceive(receiveData)), ClientRoom$Netgame.receiveSchema)), Tests$Netgame.equal, receiveData);
 
 exports.sendData = sendData;
 exports.receiveData = receiveData;
+exports.sendSchemad = sendSchemad;
+exports.testSchema = testSchema;
 /* sendData Not a pure module */

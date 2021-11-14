@@ -5,6 +5,7 @@ var Belt_Array = require("@rescript/std/lib/js/belt_Array.js");
 var Belt_Option = require("@rescript/std/lib/js/belt_Option.js");
 var Array$Netgame = require("../lib/Array.bs.js");
 var Frames$Netgame = require("./Frames.bs.js");
+var Payload$Netgame = require("./Payload.bs.js");
 var ImmuArray$Netgame = require("../lib/ImmuArray.bs.js");
 var Rebuffers$Netgame = require("../lib/Rebuffers.bs.js");
 
@@ -30,16 +31,14 @@ function serializeSend(t) {
         };
 }
 
-function sendSchema(param) {
-  return serializeSend({
-              myIndex: 0,
-              myFrames: {
-                end: 0,
-                payloads: ImmuArray$Netgame.make([])
-              },
-              otherAcks: [0]
-            });
-}
+var sendSchema = serializeSend({
+      myIndex: 0,
+      myFrames: {
+        end: 0,
+        payloads: ImmuArray$Netgame.make([Payload$Netgame.nope])
+      },
+      otherAcks: [0]
+    });
 
 function deserializeSend(schema) {
   if (schema.TAG === /* Schema */6) {
@@ -92,7 +91,7 @@ function serializeReceive(t) {
 
 var receiveSchema = serializeReceive({
       serverAck: 0,
-      players: []
+      players: [Frames$Netgame.create(10, ImmuArray$Netgame.make([Payload$Netgame.nope]))]
     });
 
 function deserializeReceive(schema) {
@@ -164,6 +163,27 @@ function getSendData(t) {
         };
 }
 
+function packSendData(sendData) {
+  return Rebuffers$Netgame.pack(serializeSend(sendData));
+}
+
+function packReceiveData(receiveData) {
+  return Rebuffers$Netgame.pack(serializeReceive(receiveData));
+}
+
+function readSendData(buffer) {
+  return deserializeSend(Rebuffers$Netgame.read(buffer, sendSchema));
+}
+
+function readReceiveData(buffer) {
+  return deserializeReceive(Rebuffers$Netgame.read(buffer, receiveSchema));
+}
+
+function getSendDataRaw(t) {
+  var sendData = getSendData(t);
+  return Rebuffers$Netgame.pack(serializeSend(sendData));
+}
+
 function step(t, action) {
   if (typeof action === "number") {
     return {
@@ -214,5 +234,10 @@ exports.addFrame = addFrame;
 exports.nope = nope;
 exports.getFirstFrames = getFirstFrames;
 exports.getSendData = getSendData;
+exports.packSendData = packSendData;
+exports.packReceiveData = packReceiveData;
+exports.readSendData = readSendData;
+exports.readReceiveData = readReceiveData;
+exports.getSendDataRaw = getSendDataRaw;
 exports.step = step;
-/* receiveSchema Not a pure module */
+/* sendSchema Not a pure module */

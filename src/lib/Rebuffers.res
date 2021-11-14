@@ -45,7 +45,7 @@ module Send = {
     | Short(_) => 2
     | Int(_) => 4
     | Float(_) => 4
-    | Array(t) => t->Belt.Array.reduce(0, (a, v) => a + size(v)) + 1
+    | Array(t) => t->Belt.Array.reduce(0, (a, v) => a + size(v)) + 4
     | Schema(t) => t->Belt.Array.reduce(0, (a, v) => a + size(v))
     }
   let rec packData = (buffer, ~offset=0, data) => {
@@ -56,7 +56,7 @@ module Send = {
     | Int(v) => buffer->NodeJs.Buffer.writeInt32LE(v, ~offset)
     | Float(v) => buffer->NodeJs.Buffer.writeFloatLE(v, ~offset)
     | Array(t) => {
-        let offset = buffer->NodeJs.Buffer.writeInt8(Belt.Array.length(t), ~offset)
+        let offset = buffer->NodeJs.Buffer.writeInt32LE(Belt.Array.length(t), ~offset)
         packData(buffer, ~offset, Schema(t))
       }
     | Schema(t) => t->Belt.Array.reduce(offset, (a, v) => buffer->packData(~offset=a, v))
@@ -101,9 +101,9 @@ module Receive = {
     | Int => buffer->NodeJs.Buffer.readInt32LE(~offset)->Int->createReadData(offset + 4)
     | Float => buffer->NodeJs.Buffer.readFloatLE(~offset)->Float->createReadData(offset + 4)
     | Array(schema) => {
-        let {data: length, offset} = readData(buffer, ~offset, Byte)
+        let {data: length, offset} = readData(buffer, ~offset, Int)
         switch length {
-        | Byte(length) => {
+        | Int(length) => {
             let (data, offset) = Belt.Array.make(length, schema)->Belt.Array.reduce(([], offset), (
               a,
               v,

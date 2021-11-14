@@ -5,7 +5,7 @@ var Dgram = require("dgram");
 var Belt_Array = require("@rescript/std/lib/js/belt_Array.js");
 var Belt_HashMapInt = require("@rescript/std/lib/js/belt_HashMapInt.js");
 var Rebuffers$Netgame = require("../lib/Rebuffers.bs.js");
-var ClientData$Netgame = require("../data-frame/ClientData.bs.js");
+var ClientRoom$Netgame = require("../data-frame/ClientRoom.bs.js");
 var ServerRoom$Netgame = require("../data-frame/ServerRoom.bs.js");
 
 var server = Dgram.createSocket("udp4");
@@ -24,7 +24,7 @@ server.on("error", (function (err) {
             console.log("Socket listening");
             
           })).on("message", (function (msg, rinfo) {
-          var data = ClientData$Netgame.deserializeSend(Rebuffers$Netgame.read(msg, ClientData$Netgame.sendSchema(undefined)));
+          var data = ClientRoom$Netgame.deserializeSend(Rebuffers$Netgame.read(msg, ClientRoom$Netgame.sendSchema));
           console.log("server got", rinfo, data);
           Belt_HashMapInt.set(rinfoMap, data.myIndex, rinfo);
           t.contents = ServerRoom$Netgame.step(t.contents, /* Receive */{
@@ -37,7 +37,7 @@ setInterval((function (param) {
         return Belt_Array.forEachWithIndex(ServerRoom$Netgame.getSendData(t.contents), (function (playerIndex, sendData) {
                       var rinfo = Belt_HashMapInt.get(rinfoMap, playerIndex);
                       if (rinfo !== undefined) {
-                        var pack = Rebuffers$Netgame.pack(ClientData$Netgame.serializeReceive(sendData));
+                        var pack = Rebuffers$Netgame.pack(ClientRoom$Netgame.serializeReceive(sendData));
                         server.send(pack, rinfo.port, rinfo.address, undefined);
                         return ;
                       }

@@ -1,17 +1,12 @@
 const Socket = require("./socket");
-const ClientData = require("../data-frame/ClientData.bs");
-const { ClientSendT } = require("../flat-models/client-send");
-const converter = require("../converter");
+const ClientData = require("../data-frame/ClientRoom.bs");
 
 const log = console.log;
 const stringify = v => JSON.stringify(v, null, 2);
 const Network = (input, gameLoop, roomId, myIndex, playerCount) => {
   let t = ClientData.nope(myIndex, playerCount);
-  const client = Socket.create((receiveObj) => {
-    const receiveData = {
-      serverAck: receiveObj.serverAck,
-      players: receiveObj.players.map(converter.rframes),
-    }
+  const client = Socket.create(buffer => {
+    const receiveData = ClientData.readReceiveData(buffer);
     t = ClientData.step(t, ClientData.receive(receiveData));
     // log("receive", stringify(receiveData));
   });
@@ -24,14 +19,9 @@ const Network = (input, gameLoop, roomId, myIndex, playerCount) => {
   }
   const sendUpdate = () => {
     try {
-      const sendData = ClientData.getSendData(t);
-      const sendObj = new ClientSendT(
-        sendData.myIndex,
-        converter.frames(sendData.myFrames),
-        sendData.otherAcks,
-      );
-      Socket.send(client, roomId, sendObj);
-      // log("send", stringify(sendObj));
+      const sendDataRaw = ClientData.getSendDataRaw(t);
+      Socket.sendRaw(client, roomId, sendDataRaw);
+
     } catch (e) {
       log(e, 'its ok');
     }

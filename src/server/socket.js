@@ -2,20 +2,16 @@
 require("util").inspect.defaultOptions.depth = 9;
 const flatbuffers = require("flatbuffers");
 const dgram = require("dgram");
-const { ClientSend } = require("../flat-models/client-send");
-const { ServerSendT } = require("../flat-models/server-send");
+const ClientData = require("../data-frame/ClientRoom.bs");
 const ServerRoom = require("../data-frame/ServerRoom.bs");
-const converter = require("../converter");
 const { startGame } = require("./game");
 const server = dgram.createSocket('udp4');
 const constants = require("../constants");
 
 const PLAYER_COUNT = 2;
-const send = function (rinfo, sendObj) {
-    const fbb = new flatbuffers.Builder(1);
-    fbb.finish(sendObj.pack(fbb));
-    server.send(fbb.asUint8Array(), rinfo.port, rinfo.address);
-};
+const sendRaw = (rinfo, sendData) => {
+    server.send(sendData, rinfo.port, rinfo.address);
+}
 server.on('error', function (err) {
     console.log("server error:\n" + err.stack);
     server.close();
@@ -53,20 +49,14 @@ const makeRoom = (info) => {
     const rinfoMap = [];
     const updateInterval = setInterval(function update() {
         try {
-            const sendDatas = ServerRoom.getSendData(t);
+            const sendDatas = ServerRoom.getSendDataRaw(t);
             // console.log("update", t, sendDatas);
             sendDatas.forEach((sendData, playerIndex) => {
                 const rinfo = rinfoMap[playerIndex];
-                const sendObj = new ServerSendT(
-                    sendData.serverAck,
-                    sendData.players.map(converter.frames),
-                    Math.random() * 1000 | 0,
-                );
-                // console.log("sendData", playerIndex, rinfo, sendObj)
-                send(rinfo, sendObj);
+                sendRaw(rinfo, sendData);
             });
         } catch (e) {
-            // console.log(e, t, "but it's ok.");
+            console.log(e, t, "but it's ok.");
         }
     }, 1000 / 10);
     const stepInterval = setInterval(() => {
@@ -77,15 +67,9 @@ const makeRoom = (info) => {
         id,
         destroy,
         onMessage(msg, rinfo) {
-            const clientSendObj = ClientSend.getRootAsClientSend(new flatbuffers.ByteBuffer(msg)).unpack();
-            if (!rinfoMap[clientSendObj.myIndex]) rinfoMap[clientSendObj.myIndex] = rinfo;
-            const clientSent = {
-                myIndex: clientSendObj.myIndex,
-                myFrames: converter.rframes(clientSendObj.myFrames),
-                otherAcks: clientSendObj.otherAcks,
-            }
-            // console.log("server got from " + rinfo.address + ":" + rinfo.port, clientSendObj.myIndex);
-
+            const clientSent = ClientData.readSendData(msg);
+            if (!rinfoMap[clientSent.myIndex]) rinfoMap[clientSent.myIndex] = rinfo;
+            // console.log("server got from " + rinfo.address + ":" + rinfo.port, clientSent.myIndex);
             t = ServerRoom.step(t, ServerRoom.receive(clientSent));
         }
     }

@@ -6,8 +6,8 @@ type t = {
   id: int,
   players: array<player>,
 }
-type sendData = ClientData.receiveData
-type receiveData = ClientData.sendData
+type sendData = ClientRoom.receiveData
+type receiveData = ClientRoom.sendData
 @deriving(accessors)
 type action = Receive(receiveData) | Consume
 let nope = playerCount => {
@@ -29,6 +29,8 @@ let getSendData = t =>
         : Frames.nope()
     ),
   })
+
+let getSendDataRaw = t => t->getSendData->Belt.Array.map(ClientRoom.packReceiveData)
 
 let step = (t, action) =>
   switch action {

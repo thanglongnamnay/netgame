@@ -13,15 +13,14 @@ let serializeSend = t => Rebuffers.Schema([
   Frames.serialize(t.myFrames),
   Array(Rebuffers.toList(t.otherAcks, ack => Int(ack))),
 ])
-let sendSchema = () =>
-  serializeSend({
-    myIndex: 0,
-    myFrames: {
-      end: 0,
-      payloads: []->ImmuArray.make,
-    },
-    otherAcks: [0],
-  })
+let sendSchema = serializeSend({
+  myIndex: 0,
+  myFrames: {
+    end: 0,
+    payloads: [Payload.nope]->ImmuArray.make,
+  },
+  otherAcks: [0],
+})
 let deserializeSend = (schema: Rebuffers.schema) =>
   switch schema {
   | Schema([Int(myIndex), myFrames, otherAcks]) => {
@@ -41,7 +40,7 @@ let serializeReceive = t => Rebuffers.Schema([
 ])
 let receiveSchema = serializeReceive({
   serverAck: 0, // dont send anything older than this
-  players: [],
+  players: [Frames.create(10, [Payload.nope]->ImmuArray.make)],
 })
 let deserializeReceive = (schema: Rebuffers.schema) =>
   switch schema {
@@ -71,6 +70,11 @@ let getSendData = (t: t) => {
   myFrames: t.playersFrames->Belt.Array.getExn(t.myIndex),
   otherAcks: t.playersFrames->Belt.Array.map(frames => frames.end),
 }
+let packSendData = sendData => sendData->serializeSend->Rebuffers.pack
+let packReceiveData = receiveData => receiveData->serializeReceive->Rebuffers.pack
+let readSendData = buffer => buffer->Rebuffers.read(sendSchema)->deserializeSend
+let readReceiveData = buffer => buffer->Rebuffers.read(receiveSchema)->deserializeReceive
+let getSendDataRaw = (t: t) => t->getSendData->packSendData
 
 let step = (t: t, action) =>
   switch action {

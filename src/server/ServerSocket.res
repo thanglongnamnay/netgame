@@ -21,7 +21,7 @@ server
 ->NodeJs.Dgram.Socket.on(
   #message(
     (msg, rinfo) => {
-      let data = msg->Rebuffers.read(ClientData.sendSchema())->ClientData.deserializeSend
+      let data = msg->Rebuffers.read(ClientRoom.sendSchema)->ClientRoom.deserializeSend
       Js.log3("server got", rinfo, data)
       rinfoMap->Belt.HashMap.Int.set(data.myIndex, rinfo)
       t := t.contents->ServerRoom.step(Receive(data))
@@ -35,7 +35,7 @@ Window.setInterval(() => {
   ->Belt.Array.forEachWithIndex((playerIndex, sendData) => {
     switch rinfoMap->Belt.HashMap.Int.get(playerIndex) {
     | Some(rinfo) => {
-        let pack = sendData->ClientData.serializeReceive->Rebuffers.pack
+        let pack = sendData->ClientRoom.serializeReceive->Rebuffers.pack
         server->NodeJs.Dgram.Socket.send(
           #Buffer(pack),
           ~port=rinfo.port,

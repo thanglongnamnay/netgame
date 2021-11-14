@@ -5,6 +5,7 @@ var Caml_obj = require("@rescript/std/lib/js/caml_obj.js");
 var Belt_Array = require("@rescript/std/lib/js/belt_Array.js");
 var Array$Netgame = require("../lib/Array.bs.js");
 var Frames$Netgame = require("./Frames.bs.js");
+var ClientRoom$Netgame = require("./ClientRoom.bs.js");
 
 function receive(param_0) {
   return /* Receive */{
@@ -38,6 +39,10 @@ function getSendData(t) {
                               }))
                       };
               }));
+}
+
+function getSendDataRaw(t) {
+  return Belt_Array.map(getSendData(t), ClientRoom$Netgame.packReceiveData);
 }
 
 function step(t, action) {
@@ -79,6 +84,7 @@ exports.receive = receive;
 exports.consume = consume;
 exports.nope = nope;
 exports.getSendData = getSendData;
+exports.getSendDataRaw = getSendDataRaw;
 exports.step = step;
 exports.getFramesAt = getFramesAt;
-/* No side effect */
+/* ClientRoom-Netgame Not a pure module */
