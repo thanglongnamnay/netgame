@@ -59,7 +59,7 @@ const startStreaming = ({ id, seed, index, startTime, players }) => {
   const gameLoop = (inputs) => {
     inputs.forEach((input, index) => {
       const tick = gameTick;
-      if (input.touches > 0) logic.shoot(index, input.touchPos, tick);
+      if (input.touches == 1) logic.shoot(index, input.touchPos, tick);
       if (input.keys.includes("a".charCodeAt(0))) logic.jump(index, jumpLeft, tick);
       else if (input.keys.includes("d".charCodeAt(0))) logic.jump(index, jumpRight, tick);
       const player = Game.Helper.findPlayer(logic.getGame(), index);
@@ -76,9 +76,9 @@ const startStreaming = ({ id, seed, index, startTime, players }) => {
         physics.jump(index, direction);
         Sound.jump();
       });
-      logic.tick();
       return;
     });
+    logic.tick();
     gameTick++;
   }
 

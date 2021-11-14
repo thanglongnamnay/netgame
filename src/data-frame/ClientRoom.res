@@ -74,7 +74,7 @@ let packSend = sendData => sendData->serializeSend->Rebuffers.pack
 let packReceive = receiveData => receiveData->serializeReceive->Rebuffers.pack
 let readSend = buffer => buffer->Rebuffers.read(sendSchema)->deserializeSend
 let readReceive = buffer => buffer->Rebuffers.read(receiveSchema)->deserializeReceive
-let getSendDataRaw = (t: t) => t->getSendData->packSend
+let getSendDataRaw = t => t->getSendData->packSend
 
 let step = (t: t, action) =>
   switch action {
