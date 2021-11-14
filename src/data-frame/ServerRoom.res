@@ -9,7 +9,7 @@ type t = {
 type sendData = ClientData.receiveData
 type receiveData = ClientData.sendData
 @deriving(accessors)
-type action = Receive(receiveData)
+type action = Receive(receiveData) | Consume
 let nope = playerCount => {
   id: 0,
   players: Belt.Array.make(
@@ -39,10 +39,13 @@ let step = (t, action) =>
         frames: player.frames->Frames.step(Concat(data.myFrames)),
       }),
     }
+  | Consume => {
+      ...t,
+      players: t.players->Belt.Array.map(player => {
+        ...player,
+        frames: player.frames->Frames.step(Shift),
+      }),
+    }
   }
 
-let getFirstFrames = t =>
-  t.players
-  ->Belt.Array.map(p => p.frames)
-  ->Belt.Array.map(Frames.getFirstFrame)
-  ->Belt.Array.map(Belt.Option.getExn)
+let getFramesAt = (t, index) => t.players->Belt.Array.map(p => p.frames->Frames.getFrameAt(index))

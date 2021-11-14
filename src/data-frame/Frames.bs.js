@@ -23,6 +23,10 @@ function getFirstFrame(t) {
   return ImmuArray$Netgame.head(t.payloads);
 }
 
+function getFrameAt(t, index) {
+  return ImmuArray$Netgame.getExn(t.payloads, (ImmuArray$Netgame.length(t.payloads) + index | 0) - t.end | 0);
+}
+
 function step(t, action) {
   if (typeof action === "number") {
     return {
@@ -101,6 +105,7 @@ function deserialize(schema) {
 exports.nope = nope;
 exports.create = create;
 exports.getFirstFrame = getFirstFrame;
+exports.getFrameAt = getFrameAt;
 exports.step = step;
 exports.serialize = serialize;
 exports.deserialize = deserialize;

@@ -57,6 +57,10 @@ app.post('/find-match', (req, res) => {
     position: { x: i == 0 ? 50 : 200, y: 50 },
   }));
   room = Room.addPlayer(room, {
+    id,
+    index: room.players.length,
+    name,
+    position: { x: room.players.length == 0 ? 50 : 200, y: 50 },
     respond: (index, startTime) => {
       res.json({
         id,
@@ -77,7 +81,7 @@ app.post('/find-match', (req, res) => {
     removeRoom(id);
     battleServer.send({
       id: constants.makeRoom,
-      roomId: id,
+      info: room,
     });
   }
 });

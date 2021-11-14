@@ -6,6 +6,7 @@ const { ClientSend } = require("../flat-models/client-send");
 const { ServerSendT } = require("../flat-models/server-send");
 const ServerRoom = require("../data-frame/ServerRoom.bs");
 const converter = require("../converter");
+const { startGame } = require("./game");
 const server = dgram.createSocket('udp4');
 const constants = require("../constants");
 
@@ -28,10 +29,29 @@ server.on('message', function (msg, rinfo) {
     rooms.filter(r => r.id === msg.readInt32LE(0)).forEach(room => room.onMessage(msg.slice(4), rinfo));
 });
 server.bind(8081);
-const makeRoom = (id) => {
+const makeRoom = (info) => {
+    const { id } = info;
+    const destroy = () => {
+        console.log("end game");
+        clearInterval(updateInterval);
+        clearInterval(stepInterval);
+    };
+    const gameStep = startGame(info, destroy);
     let t = ServerRoom.nope(PLAYER_COUNT);
+    let currentFrame = 0;
+    const tryStep = () => {
+        try {
+            const frames = ServerRoom.getFramesAt(t, currentFrame);
+            gameStep(frames);
+            currentFrame++;
+            return true;
+        } catch (e) {
+            return false;
+            // console.log("step failed", e);
+        }
+    }
     const rinfoMap = [];
-    const interval = setInterval(function update() {
+    const updateInterval = setInterval(function update() {
         try {
             const sendDatas = ServerRoom.getSendData(t);
             // console.log("update", t, sendDatas);
@@ -49,12 +69,13 @@ const makeRoom = (id) => {
             // console.log(e, t, "but it's ok.");
         }
     }, 1000 / 10);
+    const stepInterval = setInterval(() => {
+        while (tryStep());
+    }, 1000);
 
     return {
         id,
-        destroy() {
-            clearInterval(interval);
-        },
+        destroy,
         onMessage(msg, rinfo) {
             const clientSendObj = ClientSend.getRootAsClientSend(new flatbuffers.ByteBuffer(msg)).unpack();
             if (!rinfoMap[clientSendObj.myIndex]) rinfoMap[clientSendObj.myIndex] = rinfo;
@@ -75,14 +96,14 @@ const destroyRoom = room => {
 }
 let rooms = [];
 
-const addRoom = id => {
-    const room = makeRoom(id)
+const addRoom = info => {
+    const room = makeRoom(info)
     rooms.push(room);
 }
 process.on('message', msg => {
     console.log("child got", msg);
     if (msg.id === constants.makeRoom) {
         console.log("making room");
-        addRoom(msg.roomId);
+        addRoom(msg.info);
     }
 });

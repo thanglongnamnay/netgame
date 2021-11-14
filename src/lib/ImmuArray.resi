@@ -11,3 +11,4 @@ let map: (t<'a>, 'a => 'b) => t<'b>
 let cons: (t<'a>, 'a) => t<'a>
 let append: (t<'a>, 'a) => t<'a>
 let batchUpdate: (t<'a>, (array<'a>, (. array<'a>) => t<'a>) => t<'a>) => t<'a>
+let getExn: (t<'a>, int) => 'a

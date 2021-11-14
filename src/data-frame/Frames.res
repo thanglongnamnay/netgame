@@ -13,6 +13,8 @@ let nope = () => {
 }
 let create = (end, frames) => {end: end, payloads: frames}
 let getFirstFrame = t => t.payloads->ImmuArray.head
+let getFrameAt = (t, index) =>
+  t.payloads->ImmuArray.getExn(t.payloads->ImmuArray.length + index - t.end)
 let step = (t, action) =>
   switch action {
   | Concat(other) => {

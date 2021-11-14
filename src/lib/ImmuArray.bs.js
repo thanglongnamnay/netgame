@@ -52,6 +52,8 @@ var concat = Belt_Array.concat;
 
 var map = Belt_Array.map;
 
+var getExn = Belt_Array.getExn;
+
 exports.make = make;
 exports.length = length;
 exports.isEmpty = isEmpty;
@@ -64,4 +66,5 @@ exports.map = map;
 exports.cons = cons;
 exports.append = append;
 exports.batchUpdate = batchUpdate;
+exports.getExn = getExn;
 /* No side effect */

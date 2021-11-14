@@ -76,6 +76,7 @@ const Physics = (seed, dt) => {
     return body;
   }
   const removePlayer = id => {
+    console.log("Physics.removePlayer", id);
     Composite.remove(world, bodies.players.find(p => p.playerId === id));
     bodies.players = bodies.players.filter(p => p.playerId !== id);
   }
@@ -169,7 +170,6 @@ const Physics = (seed, dt) => {
         .filter(query => query.collided)
         .forEach(query => {
           const { bodyA, bodyB } = query;
-          console.log("collides", bodyA, bodyB, query);
           if (bodyA.label === "player") return hitPlayer(bullet, bodyA);
           if (bodyB.label === "player") return hitPlayer(bullet, bodyB);
         });

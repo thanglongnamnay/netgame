@@ -15,3 +15,4 @@ let commitChanges: (. array<'a>) => t<'a> = (. mutArr) => castToImmutable(mutArr
 let batchUpdate = (immArr: t<'a>, callback) => {
   callback(Js.Array2.sliceFrom(immArr, 0), commitChanges)
 }
+let getExn = Belt.Array.getExn

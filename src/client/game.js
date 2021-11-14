@@ -44,6 +44,7 @@ const startStreaming = ({ id, seed, index, startTime, players }) => {
   });
 
   const hitPlayer = ({ bid, pid }) => {
+    console.log("hitPlayer", bid, pid);
     logic.hitPlayer(bid, pid);
     if (Game.Helper.findPlayer(logic.getGame(), pid).hp <= 0) {
       physics.removePlayer(pid);
@@ -69,6 +70,7 @@ const startStreaming = ({ id, seed, index, startTime, players }) => {
         physics.shoot(id, index, direction);
         renderer.addBullet(id);
         Sound.shoot();
+        console.log("shoot", id, index, direction);
       });
       Action.getJump(player.action).forEach(direction => {
         physics.jump(index, direction);
