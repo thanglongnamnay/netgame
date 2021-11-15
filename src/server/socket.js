@@ -53,7 +53,7 @@ const makeRoom = (info) => {
             // console.log("update", t, sendDatas);
             sendDatas.forEach((sendData, playerIndex) => {
                 const rinfo = rinfoMap[playerIndex];
-                sendRaw(rinfo, sendData);
+                if (rinfo) sendRaw(rinfo, sendData);
             });
         } catch (e) {
             console.log(e, t, "but it's ok.");

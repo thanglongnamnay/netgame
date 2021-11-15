@@ -27,6 +27,7 @@ window.addEventListener('keyup', e => {
 let started = false;
 const startStreaming = ({ id, seed, index, startTime, players }) => {
   if (started) return;
+  document.getElementById('lobby').hidden = true;
   const roomId = id;
   const myIndex = index;
   started = true;
@@ -42,13 +43,26 @@ const startStreaming = ({ id, seed, index, startTime, players }) => {
   app.renderer.plugins.interaction.on('pointerup', e => {
     input.touchdown(e.data.getLocalPosition(renderer.getObjects().terrain));
   });
-
+  app.view.hidden = false;
+  const onEndGame = (winners) => {
+    app.view.hidden = true;
+    document.getElementById('endgame').hidden = false;
+    if (winners[0]) {
+      document.getElementById('winner').innerText = "Player " + winners[0].id + " wins.";
+    } else {
+      document.getElementById('winner').innerText = "Draw.";
+    }
+  }
   const hitPlayer = ({ bid, pid }) => {
     console.log("hitPlayer", bid, pid);
     logic.hitPlayer(bid, pid);
     if (Game.Helper.findPlayer(logic.getGame(), pid).hp <= 0) {
       physics.removePlayer(pid);
       renderer.removePlayer(pid);
+    }
+    const lastPlayers = logic.getGame().players.filter(p => p.hp > 0);
+    if (lastPlayers.length <= 1) {
+      return onEndGame(lastPlayers);
     }
   }
   const hitBullet = ({ bid }) => {
@@ -85,7 +99,7 @@ const startStreaming = ({ id, seed, index, startTime, players }) => {
   let bulletId = 0;
   const logic = Logic();
   const physics = Physics(seed, dtEngine);
-  const renderer = Renderer(app, physics);
+  const renderer = Renderer(app, physics, myIndex);
 
   Matter.Events.on(physics, 'hit-player', hitPlayer);
   Matter.Events.on(physics, 'hit-bullet', hitBullet);
@@ -104,11 +118,12 @@ const startStreaming = ({ id, seed, index, startTime, players }) => {
     renderer.addPlayer(id);
   });
   let frameCount = 0;
+  let timeout;
   (function run() {
     const now = Date.now();
     if (now < startTime) {
       console.log("now", now, startTime);
-      setTimeout(run, dtEngine);
+      timeout = setTimeout(run, dtEngine);
       return;
     }
     let canStep = true;
@@ -129,9 +144,9 @@ const startStreaming = ({ id, seed, index, startTime, players }) => {
       network.sendUpdate();
     }
     if (bufferSize > 3) {
-      setTimeout(run, 0);
+      timeout = setTimeout(run, 0);
     } else {
-      setTimeout(run, dtEngine);
+      timeout = setTimeout(run, dtEngine);
     }
   })();
 };

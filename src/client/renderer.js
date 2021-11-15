@@ -11,7 +11,14 @@ const bulletGeometry = new PIXI.GraphicsGeometry();
 bulletGeometry.drawShape(new PIXI.Circle(0, 0, 5), playerFill, new PIXI.LineStyle(), new PIXI.Matrix());
 
 const clamp = (a, b, x) => x < a ? a : (x > b ? b : a);
-const Renderer = (app, physics) => {
+const limitVec2 = (v, maxLen) => {
+  const length = Math.sqrt(v.x * v.x + v.y * v.y);
+  if (length <= maxLen) return v;
+  const m = maxLen / length;
+  return new PIXI.Point(v.x * m, v.y * m);
+}
+const subtract = (a, b) => new PIXI.Point(a.x - b.x, a.y - b.y);
+const Renderer = (app, physics, myIndex) => {
   const { width, height } = app;
   const objects = {
     players: [],
@@ -19,13 +26,34 @@ const Renderer = (app, physics) => {
     background: PIXI.Sprite.from('resource/table-small.jpeg'),
     terrain: new PIXI.Graphics(),
     terrainBorder: new PIXI.Graphics(),
+    indicator: new PIXI.Graphics(),
   };
   // objects.background.tint = 0x555555;
   // objects.background.scale.set(0.25, 0.2 5);
   app.stage.addChild(objects.background);
   app.stage.addChild(objects.terrainBorder);
   app.stage.addChild(objects.terrain);
-
+  app.stage.addChild(objects.indicator);
+  const onMouse = e => {
+    const player = objects.players[myIndex];
+    const { indicator } = objects;
+    indicator.clear();
+    indicator.lineStyle({
+      width: 2,
+      color: 0xffffff,
+      alpha: 0.6,
+    });
+    if (player) {
+      const direction = limitVec2(subtract(e.data.getLocalPosition(objects.terrain), player.position), 150);
+      // const direction = e.data.getLocalPosition(objects.terrain);
+      indicator.beginFill(0xffffff);
+      indicator.moveTo(0, 0);
+      indicator.lineTo(direction.x, direction.y);
+      indicator.endFill();
+    }
+  }
+  app.renderer.plugins.interaction.on('pointerenter', onMouse);
+  app.renderer.plugins.interaction.on('pointermove', onMouse);
   app.ticker.add(() => {
     physics.getBodies().players.forEach(body => {
       const id = body.playerId;
@@ -46,10 +74,11 @@ const Renderer = (app, physics) => {
       bullet.rotation = body.angle;
     });
 
-    const pos = objects.players[0]?.position;
+    const pos = objects.players[myIndex]?.position;
     if (pos) {
       app.stage.pivot.x = clamp(0, 800, pos.x - width / 2);
       app.stage.pivot.y = clamp(0, 600, pos.y - height / 2);
+      objects.indicator.position.set(pos.x, pos.y);
     }
   });
 

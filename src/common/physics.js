@@ -3,6 +3,12 @@ const ClipperLib = require('./clipper.js');
 const Matter = require('matter-js');
 const { Engine, Common, Composite, Bodies, Body, Render } = Matter;
 
+const limitVec2 = (v, maxLen) => {
+  const length = Math.sqrt(v.x * v.x + v.y * v.y);
+  if (length <= maxLen) return v;
+  const m = maxLen / length;
+  return v2(v.x * m, v.y * m);
+}
 const v2 = Matter.Vector.create
 const V2 = p => ({ X: p.x, Y: p.y });
 const rv2 = p => v2(p.X, p.Y);
@@ -85,7 +91,7 @@ const Physics = (seed, dt) => {
       isSensor: true,
     });
     body.label = "bullet";
-    Body.setVelocity(body, v);
+    Body.setVelocity(body, limitVec2(v, 10));
     body.bulletId = id;
     Composite.add(world, body);
     bodies.bullets.push(body);

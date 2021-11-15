@@ -19,12 +19,17 @@ async function postData(url = '', data = {}) {
   return response.json(); // parses JSON response into native JavaScript objects
 }
 window.addEventListener('DOMContentLoaded', function () {
-  document.getElementById('find-match').onclick = async (e) => {
+  const id = document.getElementById.bind(document);
+  id('find-match').onclick = async (e) => {
     postData(`http://${constants.host}:8080/find-match`, {
-      name: document.getElementById('name').value,
+      name: "",
     }).then(info => {
       console.log("fetched", info);
       startStreaming(info);
     });
+  };
+  id('rematch').onclick = () => {
+    id('lobby').hidden = false;
+    id('endgame').hidden = true;
   }
 });
